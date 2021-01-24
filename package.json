@@ -1,0 +1,26 @@
+{
+  "name": "three3",
+  "version": "1.0.0",
+  "description": "ocean degradation audio visual",
+  "main": "index.js",
+  "dependencies": {
+    "three": "^0.124.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexrehopkins/burningreef.git"
+  },
+  "keywords": [
+    "CCTP"
+  ],
+  "author": "alex hopkins",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alexrehopkins/burningreef/issues"
+  },
+  "homepage": "https://github.com/alexrehopkins/burningreef#readme"
+}
