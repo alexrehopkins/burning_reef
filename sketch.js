@@ -6,7 +6,7 @@ let container;
 let camera, controls, scene, renderer;
 let mesh, texture;
 
-const worldWidth = 256, worldDepth = 256;
+const worldWidth = 56, worldDepth = 56;
 const clock = new THREE.Clock();
 
 init();
@@ -19,15 +19,15 @@ function init() {
     camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x4dd8ff );
-    scene.fog = new THREE.FogExp2( 0x4dd8ff, 0.0025 );
+    scene.background = new THREE.Color( 0x13aae8 );
+    scene.fog = new THREE.FogExp2( 0x13aae8, 0.001 );
 
     const data = generateHeight( worldWidth, worldDepth );
 
     camera.position.set( 100, 800, - 800 );
     camera.lookAt( - 100, 810, - 800 );
 
-    const geometry = new THREE.PlaneBufferGeometry( 10000, 10000, worldWidth - 1, worldDepth - 1 );
+    const geometry = new THREE.PlaneBufferGeometry( 7500, 7500, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
 
     const vertices = geometry.attributes.position.array;
@@ -45,14 +45,17 @@ function init() {
     mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { map: texture } ) );
     scene.add( mesh );
 
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({antialias: true}); // alpha: true
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
 
     controls = new FirstPersonControls( camera, renderer.domElement );
-    controls.movementSpeed = 50;
-    controls.lookSpeed = 0.1;
+    controls.movementSpeed = 500;
+    controls.lookSpeed = 0.05;
+    controls.verticalMax = 3*Math.PI/4;
+    controls.verticalMin = Math.PI/4;
+    controls.constrainVertical = true;
 
     window.addEventListener( 'resize', onWindowResize, false );
 
