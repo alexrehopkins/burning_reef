@@ -13,3 +13,21 @@ body {
     overflow: hidden;
     margin: 0px;
 }
+
+#myProgress {
+  width: 100%;
+  background-color: grey;
+  position: absolute;
+  z-index: 2;
+  bottom: 10px;
+}
+
+#myBar {
+  width: 0%;
+  height: 10px;
+  background-color: blue;
+}
+
+#container {
+  z-index: 1;
+}
