@@ -2,6 +2,8 @@ import * as THREE from './node_modules/three/build/three.module.js';
 import { FirstPersonControls } from './node_modules/three/examples/jsm/controls/FirstPersonControls.js';
 import { ImprovedNoise } from './node_modules/three/examples/jsm/math/ImprovedNoise.js';
 import { GLTFLoader } from './node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+import { GodRaysFakeSunShader, GodRaysDepthMaskShader, GodRaysCombineShader, GodRaysGenerateShader } from './node_modules/three/examples/jsm/shaders/GodRaysShader.js';
+
 
 let container;
 let camera, controls, scene, renderer, coral, hlight, directionalLight;
@@ -10,6 +12,10 @@ let timeLeft = 100; //percentage, 100 just started, 0 is entirely degraded and e
 
 const worldWidth = 56, worldDepth = 56;
 const clock = new THREE.Clock();
+
+const postprocessing = {enabled: true};
+const godrayRenderTargetResolutionMultiplier = 1.0 / 4.0;
+
 
 init();
 animate();
@@ -69,6 +75,27 @@ function init() {
     materialArray.push(new THREE.MeshBasicMaterial({map: texture_px}));
     let texture_pz = new THREE.TextureLoader().load('assets/pz.png');
     materialArray.push(new THREE.MeshBasicMaterial({map: texture_pz}));
+
+    //godrays
+    /*
+    let circleGeo = new THREE.CircleGeometry(220,50);
+    let circleMat = new THREE.MeshBasicMaterial({color: 0xffccaa});
+    let circle = new THREE.Mesh(circleGeo, circleMat);
+    circle.position.set(- 100, 2810, - 800 );
+    circle.scale.set(5,5,5);
+    circle.rotation.x = Math.PI/2;
+    scene.add(circle);
+
+    let godraysEffect = new POSTPROCESSING.godraysEffect(camera, circle, {
+        resolutionScale: 1,
+        density: 0.6,
+        decay: 0.95,
+        weight: 0.9,
+        samples: 100
+    });*/
+
+
+
 
     for(let i=0;i<6;i++){
         materialArray[i].side = THREE.BackSide;
