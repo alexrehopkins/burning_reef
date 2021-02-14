@@ -8,7 +8,10 @@ import { GodRaysFakeSunShader, GodRaysDepthMaskShader, GodRaysCombineShader, God
 let container;
 let camera, controls, scene, renderer, coral, hlight, directionalLight;
 let mesh, texture;
-let timeLeft = 100; //percentage, 100 just started, 0 is entirely degraded and ending
+let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and ending
+let artefactX = 100;
+let artefactZ = 100;
+let artefact;
 
 const worldWidth = 56, worldDepth = 56;
 const clock = new THREE.Clock();
@@ -28,12 +31,12 @@ function init() {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x29a4d2 );
-    scene.fog = new THREE.FogExp2( 0x29a4d2, 0.001 ); //0.001 for fog
+    scene.fog = new THREE.FogExp2( 0x29a4d2, 0.003 ); //0.001 for fog
 
     const data = generateHeight( worldWidth, worldDepth );
 
-    camera.position.set( 100, 800, - 800 );
-    camera.lookAt( - 100, 810, - 800 );
+    camera.position.set( 100, 110, - 800 );
+    camera.lookAt( - 100, 10, - 800 );
 
     const geometry = new THREE.PlaneBufferGeometry( 10000, 10000, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
@@ -48,67 +51,38 @@ function init() {
 
     hlight = new THREE.AmbientLight (0x404040,2);
     scene.add(hlight);
-    directionalLight = new THREE.DirectionalLight(0xffffff,1);
+    directionalLight = new THREE.DirectionalLight(0x61d3ff,0.5);
     directionalLight.castShadow = true;
     directionalLight.position.set(0,1000,0);
     scene.add(directionalLight);
 
 
     //coral import
-    loadCoral('assets/coral1Coloured.gltf',2);
-    loadCoral('assets/coral2Coloured.gltf',1);
-    loadCoral('assets/kelp1Coloured.gltf',4);
-    loadCoral('assets/seaweed1Coloured.gltf',3);
-
+    loadCoral('assets/sceneReef.gltf',3,-20,10,-800,"scene");
+    loadCoral('assets/coral1Coloured.gltf',3,artefactX,100,artefactZ,"artefact1");
 
     //skybox
-    let materialArray = [];
-    let texture_nz = new THREE.TextureLoader().load('assets/nz.png');
-    materialArray.push(new THREE.MeshBasicMaterial({map: texture_nz}));
-    let texture_nx = new THREE.TextureLoader().load('assets/nx.png');
-    materialArray.push(new THREE.MeshBasicMaterial({map: texture_nx}));
-    let texture_py = new THREE.TextureLoader().load('assets/py.png');
-    materialArray.push(new THREE.MeshBasicMaterial({map: texture_py}));
-    let texture_ny = new THREE.TextureLoader().load('assets/ny.png');
-    materialArray.push(new THREE.MeshBasicMaterial({map: texture_ny}));
-    let texture_px = new THREE.TextureLoader().load('assets/px.png');
-    materialArray.push(new THREE.MeshBasicMaterial({map: texture_px}));
-    let texture_pz = new THREE.TextureLoader().load('assets/pz.png');
-    materialArray.push(new THREE.MeshBasicMaterial({map: texture_pz}));
-
-    //godrays
-    /*
-    let circleGeo = new THREE.CircleGeometry(220,50);
-    let circleMat = new THREE.MeshBasicMaterial({color: 0xffccaa});
-    let circle = new THREE.Mesh(circleGeo, circleMat);
-    circle.position.set(- 100, 2810, - 800 );
-    circle.scale.set(5,5,5);
-    circle.rotation.x = Math.PI/2;
-    scene.add(circle);
-
-    let godraysEffect = new POSTPROCESSING.godraysEffect(camera, circle, {
-        resolutionScale: 1,
-        density: 0.6,
-        decay: 0.95,
-        weight: 0.9,
-        samples: 100
-    });*/
-
-
-
-
-    for(let i=0;i<6;i++){
-        materialArray[i].side = THREE.BackSide;
-        materialArray[i].fog = false;
-    }
-
-    let skyboxGeo = new THREE.BoxGeometry(7500,7500,7500);
-    let skyboxV = new THREE.Mesh(skyboxGeo, materialArray);
-    scene.add(skyboxV)
+    const vertexShader = document.getElementById( 'vertexShader' ).textContent;
+	const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
+	const uniforms = {
+		topColor: { value: new THREE.Color( 0x29a4d2 ) },
+        bottomColor: { value: new THREE.Color( 0x0c4b63 ) },
+        offset: { value: 400 },
+		exponent: { value: 0.6 }
+	};
+	uniforms.topColor.value.copy( directionalLight.color );
+	const skyGeo = new THREE.SphereGeometry( 4000, 32, 15 );
+	const skyMat = new THREE.ShaderMaterial( {
+		uniforms: uniforms,
+		vertexShader: vertexShader,
+		fragmentShader: fragmentShader,
+		side: THREE.BackSide
+    } );
+    const sky = new THREE.Mesh( skyGeo, skyMat );
+	scene.add( sky );
 
 
     //end of skybox
-
 
 
     texture = new THREE.CanvasTexture( generateTexture( data, worldWidth, worldDepth ) );
@@ -261,23 +235,29 @@ function render() {
     renderer.render( scene, camera );
     
     //timeline
-    if (timeLeft > 0) {
-        timeLeft = timeLeft - 0.01;
+    if (timeLeft < 100) {
+        timeLeft = timeLeft + 0.01; //every frame degrades
         var elem = document.getElementById("myBar");
-        elem.style.width = (100-timeLeft) + "%";
+        handleArtefact();
+        elem.style.width = (timeLeft) + "%";
+        document.getElementById("container").style.filter = "grayscale("+timeLeft/100+")";
     }
     
 }
 
-function loadCoral(assetLocation,scaler) {
+function loadCoral(assetLocation,scaler, x, y, z, type) {
     const loader = new GLTFLoader();
     loader.load(assetLocation,function ( gltf ) {
-        coral = gltf.scene;    
-        coral.scale.set(scaler,scaler,scaler);
-        groundDetect();
-        coral.position.set(80,800,-800);
-        scene.add( gltf.scene );
-               
+        if (type == "artefact1") {
+            artefact = gltf.scene;    
+            artefact.scale.set(scaler,scaler,scaler);
+            artefact.position.set(x,y,z);
+        } else {
+            coral = gltf.scene;    
+            coral.scale.set(scaler,scaler,scaler);
+            coral.position.set(x,y,z);
+        }    
+        scene.add( gltf.scene );      
         },
         // called while loading is progressing
         function ( xhr ) {
@@ -291,6 +271,13 @@ function loadCoral(assetLocation,scaler) {
     );
 }
 
-function groundDetect() {
-
+function handleArtefact() {
+    if (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 30){
+        while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 100) {
+            artefactX = Math.floor(Math.random() * 200);
+            artefactZ = Math.floor(Math.random() * 200);
+        }
+        artefact.position.set(artefactX,100,artefactZ);
+        console.log("WELL DONE");
+    }
 }

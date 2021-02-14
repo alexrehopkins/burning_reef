@@ -30,4 +30,5 @@ body {
 
 #container {
   z-index: 1;
+  filter: grayscale(0%);
 }
