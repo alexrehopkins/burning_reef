@@ -12,6 +12,7 @@ let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and end
 let artefactX = 100;
 let artefactZ = 100;
 let artefact;
+let artefactFound = [0,0,0,0,0,0];
 
 const worldWidth = 56, worldDepth = 56;
 const clock = new THREE.Clock();
@@ -31,14 +32,14 @@ function init() {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x29a4d2 );
-    scene.fog = new THREE.FogExp2( 0x29a4d2, 0.003 ); //0.001 for fog
+    scene.fog = new THREE.FogExp2( 0x3689a8, 0.001 ); //0.001 for fog
 
     const data = generateHeight( worldWidth, worldDepth );
 
-    camera.position.set( 100, 110, - 800 );
+    camera.position.set( 100, 810, - 800 );
     camera.lookAt( - 100, 10, - 800 );
 
-    const geometry = new THREE.PlaneBufferGeometry( 10000, 10000, worldWidth - 1, worldDepth - 1 );
+    const geometry = new THREE.PlaneBufferGeometry( 5000, 5000, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
 
     const vertices = geometry.attributes.position.array;
@@ -191,8 +192,8 @@ function generateTexture( data, width, height ) {
     // Scaled 4x
 
     const canvasScaled = document.createElement( 'canvas' );
-    canvasScaled.width = width * 4;
-    canvasScaled.height = height * 4;
+    canvasScaled.width = width;
+    canvasScaled.height = height;
 
     context = canvasScaled.getContext( '2d' );
     context.scale( 4, 4 );
@@ -279,5 +280,8 @@ function handleArtefact() {
         }
         artefact.position.set(artefactX,100,artefactZ);
         console.log("WELL DONE");
+        artefactFound[0] = 1;
     }
 }
+
+export default {artefactFound};
