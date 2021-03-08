@@ -6,15 +6,19 @@ import { GodRaysFakeSunShader, GodRaysDepthMaskShader, GodRaysCombineShader, God
 
 
 let container;
-let camera, controls, scene, renderer, coral, hlight, directionalLight;
+let camera, controls, scene, renderer, hlight, directionalLight;
+let coral = [];
 let mesh, texture;
 let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and ending
 let artefactX = 100;
 let artefactZ = 100;
 let artefact;
 let artefactFound = [0,0,0,0,0,0];
+let newcoral;
 
-const worldWidth = 56, worldDepth = 56;
+let resetCounter = 0;
+
+const worldWidth = 560, worldDepth = 560;
 const clock = new THREE.Clock();
 
 const postprocessing = {enabled: true};
@@ -39,7 +43,7 @@ function init() {
     camera.position.set( 100, 810, - 800 );
     camera.lookAt( - 100, 10, - 800 );
 
-    const geometry = new THREE.PlaneBufferGeometry( 5000, 5000, worldWidth - 1, worldDepth - 1 );
+    const geometry = new THREE.PlaneBufferGeometry( 50000, 50000, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
 
     const vertices = geometry.attributes.position.array;
@@ -59,8 +63,12 @@ function init() {
 
 
     //coral import
-    loadCoral('assets/sceneReef.gltf',3,-20,10,-800,"scene");
-    loadCoral('assets/coral1Coloured.gltf',3,artefactX,100,artefactZ,"artefact1");
+    loadCoral('assets/coral1Coloured.gltf',3, 100, 810, - 800,"scene");
+    loadCoral('assets/coral2Coloured.gltf',3, 100, 810, - 820,"scene");
+    loadCoral('assets/coral1Coloured.gltf',3, 100, 810, - 840,"scene");
+    loadCoral('assets/coral2Coloured.gltf',3, 100, 810, - 860,"scene");
+    loadCoral('assets/coral1Coloured.gltf',3, 100, 810, - 880,"scene");
+    loadCoral('assets/coral2Coloured.gltf',3,artefactX,100,artefactZ,"artefact1");
 
     //skybox
     const vertexShader = document.getElementById( 'vertexShader' ).textContent;
@@ -68,7 +76,7 @@ function init() {
 	const uniforms = {
 		topColor: { value: new THREE.Color( 0x29a4d2 ) },
         bottomColor: { value: new THREE.Color( 0x0c4b63 ) },
-        offset: { value: 400 },
+        offset: { value: 900 },
 		exponent: { value: 0.6 }
 	};
 	uniforms.topColor.value.copy( directionalLight.color );
@@ -158,7 +166,7 @@ function generateTexture( data, width, height ) {
 
     const vector3 = new THREE.Vector3( 0, 0, 0 );
 
-    const sun = new THREE.Vector3( 1, 1, 1 );
+    const sun = new THREE.Vector3( 1, 900, 1 );
     sun.normalize();
 
     const canvas = document.createElement( 'canvas' );
@@ -181,9 +189,9 @@ function generateTexture( data, width, height ) {
 
         shade = vector3.dot( sun );
 
-        imageData[ i ] = ( 32 + shade * 32 ) * ( 0.5 + data[ j ] * 0.007 );
-        imageData[ i + 1 ] = ( 96 + shade * 24 ) * ( 0.5 + data[ j ] * 0.007 );
-        imageData[ i + 2 ] = ( 64 +  shade * 24 ) * ( 0.5 + data[ j ] * 0.007 );
+        imageData[ i ] = ( 96 + shade * 32 ) * ( 0.5 + data[ j ] * 0.007 );
+        imageData[ i + 1 ] = ( 160 + shade * 24 ) * ( 0.5 + data[ j ] * 0.007 );
+        imageData[ i + 2 ] = ( 128 +  shade * 24 ) * ( 0.5 + data[ j ] * 0.007 );
 
     }
 
@@ -221,9 +229,14 @@ function generateTexture( data, width, height ) {
 //
 
 function animate() {
-
+    resetCounter++;
     requestAnimationFrame( animate );
-
+    if (resetCounter >= 500) { //run every 50 frames
+        for (let f = 0; f < coral.length; f++) {
+            handleCoral(f);
+        }
+        resetCounter = 0;
+    }
     render();
 
 
@@ -254,9 +267,11 @@ function loadCoral(assetLocation,scaler, x, y, z, type) {
             artefact.scale.set(scaler,scaler,scaler);
             artefact.position.set(x,y,z);
         } else {
-            coral = gltf.scene;    
-            coral.scale.set(scaler,scaler,scaler);
-            coral.position.set(x,y,z);
+            coral.push(0);
+            coral[newcoral] = gltf.scene;    
+            coral[newcoral].scale.set(scaler,scaler,scaler);
+            coral[newcoral].position.set(x,y,z);
+            newcoral++;
         }    
         scene.add( gltf.scene );      
         },
@@ -281,6 +296,22 @@ function handleArtefact() {
         artefact.position.set(artefactX,100,artefactZ);
         console.log("WELL DONE");
         artefactFound[0] = 1;
+    }
+}
+
+function handleCoral(coralNum) {
+    let coralPosX;
+    let coralPosZ;
+    console.log(coralNum);
+    console.log(coral[coralNum]);
+    console.log(coral[coralNum].position.x);
+    if (Math.hypot(coral[coralNum].position.x-camera.position.x,coral[coralNum].position.z-camera.position.z) > 1000){
+        while (Math.hypot(coral[coralNum].position.x-camera.position.x,coral[coralNum].position.z-camera.position.z) < 800) {
+            coralPosX = Math.floor(Math.random() * 1000);
+            coralPosZ = Math.floor(Math.random() * 1000);
+        }
+        coral(coralNum).position.set(coralPosX,100,coralPosZ);
+        console.log("reposition");
     }
 }
 

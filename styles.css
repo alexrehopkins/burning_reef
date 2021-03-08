@@ -50,3 +50,8 @@ body {
   z-index: 2;
   display: none;
 }
+
+#imgurl {
+  width: 20%;
+  padding-left: 40%;
+}
