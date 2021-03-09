@@ -16,11 +16,15 @@ let artefact;
 let artefactFound = [0,0,0,0,0,0];
 let newcoral = 0;
 let data;
-
+let halfOfDistanceWidth;
+let halfOfDistanceDepth;
 let resetCounter = 0;
+let spaceBetweenPoints;
 
+const worldDirectWidth = 56000, worldDirectDepth = 56000;
 const worldWidth = 560, worldDepth = 560;
 const clock = new THREE.Clock();
+const respawnDistance = 100;
 
 const postprocessing = {enabled: true};
 const godrayRenderTargetResolutionMultiplier = 1.0 / 4.0;
@@ -35,6 +39,10 @@ function init() {
 
     camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 ); //last value is render distance
 
+
+    halfOfDistanceWidth = worldDirectWidth/2;
+    halfOfDistanceDepth = worldDirectDepth/2;
+    spaceBetweenPoints = (worldDirectWidth/worldWidth+worldDirectDepth/worldDepth)/2;
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x29a4d2 );
     scene.fog = new THREE.FogExp2( 0x3689a8, 0.001 ); //0.001 for fog
@@ -44,7 +52,7 @@ function init() {
     camera.position.set( 0, 810, 0 );
     camera.lookAt( 0, 810, 10 );
 
-    const geometry = new THREE.PlaneBufferGeometry( 56000, 56000, worldWidth - 1, worldDepth - 1 );
+    const geometry = new THREE.PlaneBufferGeometry( worldDirectWidth, worldDirectDepth, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
 
     const vertices = geometry.attributes.position.array;
@@ -64,11 +72,10 @@ function init() {
 
 
     //coral import
-    loadCoral('assets/coral1Coloured.gltf',10, 0, 810, 20,"scene");
-    loadCoral('assets/coral2Coloured.gltf',10, 0, 810, 40,"scene");
-    loadCoral('assets/coral1Coloured.gltf',10, 0, 810, 60,"scene");
-    loadCoral('assets/coral2Coloured.gltf',10, 0, 810, 80,"scene");
-    loadCoral('assets/coral1Coloured.gltf',10, 0, 810, 100,"scene");
+    for(let i = 0; i < 200; i++){
+        loadCoral('assets/coral1Coloured.gltf',Math.random()*30, 10000, 810, 0,"scene");
+        loadCoral('assets/coral2Coloured.gltf',Math.random()*30, 10000, 810, 0,"scene");
+    }
     loadCoral('assets/coral2Coloured.gltf',10,artefactX,810,artefactZ,"artefact1");
 
     //skybox
@@ -108,8 +115,8 @@ function init() {
     container.appendChild( renderer.domElement );
 
     controls = new FirstPersonControls( camera, renderer.domElement );
-    controls.movementSpeed = 1000;
-    controls.lookSpeed = 0.05;
+    controls.movementSpeed = 100;
+    controls.lookSpeed = 0.07;
     controls.verticalMax = 3*Math.PI/4;
     controls.verticalMin = Math.PI/4;
     controls.constrainVertical = true;
@@ -277,9 +284,10 @@ function loadCoral(assetLocation,scaler, x, y, z, type) {
             //get y coord of landscape
             let coralnewY = data[worldWidth*z+x];
             coral[newcoral].position.set(x,coralnewY,z);
+            handleCoral(newcoral); 
             newcoral++;
         }    
-        scene.add( gltf.scene );      
+        scene.add( gltf.scene );
         },
         // called while loading is progressing
         function ( xhr ) {
@@ -309,25 +317,26 @@ function handleCoral(coralNum) {
     let coralPosX = camera.position.x;
     let coralPosZ = camera.position.z;
     //console.log(camera.position);
-    if (Math.hypot(coral[coralNum].position.x-camera.position.x,coral[coralNum].position.z-camera.position.z) > 200){ //200 distance away from camera to despawn
-        while (Math.hypot(coralPosX-camera.position.x,coralPosZ-camera.position.z) < 80) { //80 distance away from camera to spawn
-            coralPosX = camera.position.x+Math.floor(Math.random() * 200)-100; //random from -100 to 100
-            coralPosZ = camera.position.z+Math.floor(Math.random() * 200)-100;
+    if (Math.hypot(coral[coralNum].position.x-camera.position.x,coral[coralNum].position.z-camera.position.z) > 20*respawnDistance){ //200 distance away from camera to despawn
+        while (Math.hypot(coralPosX-camera.position.x,coralPosZ-camera.position.z) < 8*respawnDistance) { //80 distance away from camera to spawn
+            coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance; //random from -100 to 100
+            coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
         }
 
         //convert to points on landscape by rounding
-        coralPosX = Math.round((28000+coralPosX)/100)*100;
-        coralPosZ = Math.round((28000+coralPosZ)/100)*100;
+        coralPosX = Math.round((halfOfDistanceWidth+coralPosX)/spaceBetweenPoints)*spaceBetweenPoints;
+        coralPosZ = Math.round((halfOfDistanceDepth+coralPosZ)/spaceBetweenPoints)*spaceBetweenPoints;
         
+        
+
         console.log(coralPosX);
         console.log(coralPosZ);
 
-        let coralPosY = 10*data[(coralPosZ)/(100)*worldWidth+coralPosX/(100)];
-        console.log((coralPosZ)/(100)*worldWidth+coralPosX/(100));
+        let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
         
         //coralPosY = data[0]*10;
         console.log(coralPosY);
-        coral[coralNum].position.set(coralPosX-28000,coralPosY,coralPosZ-28000);
+        coral[coralNum].position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
     }
 }
 
