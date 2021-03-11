@@ -8,6 +8,7 @@ import { GodRaysFakeSunShader, GodRaysDepthMaskShader, GodRaysCombineShader, God
 let container;
 let camera, controls, scene, renderer, hlight, directionalLight;
 let coral = [];
+let fish = [];
 let mesh, texture;
 let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and ending
 let artefactX = 0;
@@ -20,11 +21,13 @@ let halfOfDistanceWidth;
 let halfOfDistanceDepth;
 let resetCounter = 0;
 let spaceBetweenPoints;
+const numIndividualAssets = 150;
 
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
 const worldWidth = 560, worldDepth = 560;
 const clock = new THREE.Clock();
 const respawnDistance = 200;
+let sky;
 
 const postprocessing = {enabled: true};
 const godrayRenderTargetResolutionMultiplier = 1.0 / 4.0;
@@ -88,9 +91,11 @@ function init() {
 		uniforms: uniforms,
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader,
-		side: THREE.BackSide
+		side: THREE.BackSide,
+        transparent: true,
+        opacity: 0.5
     } );
-    const sky = new THREE.Mesh( skyGeo, skyMat );
+    sky = new THREE.Mesh( skyGeo, skyMat );
 	scene.add( sky );
 
 
@@ -119,7 +124,7 @@ function init() {
     window.addEventListener( 'resize', onWindowResize, false );
 
     //coral import
-    for(let i = 0; i < 50; i++){
+    for(let i = 0; i < numIndividualAssets; i++){
         loadCoral('assets/coral1.gltf',4+Math.random()*20,"scene");
         loadCoral('assets/coral2.gltf',4+Math.random()*20,"scene"); 
         loadCoral('assets/coral3.gltf',4+Math.random()*20,"scene");
@@ -127,7 +132,6 @@ function init() {
         loadCoral('assets/seaweed1.gltf',4+Math.random()*20,"scene");
         loadCoral('assets/kelp1.gltf',14+Math.random()*20,"scene");
         loadCoral('assets/fish1.gltf',4+Math.random()*5 ,"fish");
-
     }
     loadCoral('assets/coral2.gltf',10,"artefact1");
 
@@ -251,6 +255,11 @@ function animate() {
             handleCoral(f);
         }
         resetCounter = 0;
+        
+    }
+    sky.position.set(camera.position.x,camera.position.y,camera.position.z); //reset skybox to camera
+    for (let f = 0; f < fish.length; f++) {
+        handleFish(f);
     }
     render();
 
@@ -270,6 +279,15 @@ function render() {
         handleArtefact();
         elem.style.width = (timeLeft) + "%";
         document.getElementById("container").style.filter = "grayscale("+timeLeft/100+")";
+
+        //reduce fish as time progresses
+        if (1-(timeLeft/100) < fish.length/numIndividualAssets) {
+            for (let i = 0; i < fish.length; i++){
+                if (fish.length > 1){
+                    fish.pop(); //remove a fish from array if there are multiple fish in the array, and the percentage of remaining fish is larger that than the percentage of remaining time. Could be used as a final score perhaps?
+                }
+            }
+        }
     }
     
 }
@@ -283,7 +301,11 @@ function loadCoral(assetLocation,scaler, type) {
             artefact.position.set(artefactX,810,artefactZ);
             var material1 = new THREE.MeshBasicMaterial( { color: 0x000000});
             artefact.material = material1;
-        } else {
+        } 
+        else {
+            if (type =="fish") {
+                fish.push(newcoral); //make list of values in array that are fish
+            }
             coral.push(gltf.scene);
             //material.map for variations in colour?
              //instancedmesh better for many coral models?
@@ -332,7 +354,7 @@ function handleCoral(coralNum) {
         
         coral[coralNum].position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
     } 
-    else if (Math.hypot(coral[coralNum].position.x-camera.position.x,coral[coralNum].position.z-camera.position.z) > 20*respawnDistance){ //200 distance away from camera to despawn
+    else if (Math.hypot(coral[coralNum].position.x-camera.position.x,coral[coralNum].position.z-camera.position.z) > 11*respawnDistance){ //200 distance away from camera to despawn
         while (Math.hypot(coralPosX-camera.position.x,coralPosZ-camera.position.z) < 8*respawnDistance) { //80 distance away from camera to spawn
             coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance; //random from -100 to 100
             coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
@@ -348,6 +370,12 @@ function handleCoral(coralNum) {
 
         coral[coralNum].position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
     }
+}
+
+function handleFish(FishNum) {
+    coral[fish[FishNum]].translateZ(2);
+    coral[fish[FishNum]].translateY(0.01);
+    coral[fish[FishNum]].rotateY((Math.random()*0.1)-(Math.random()*0.1));
 }
 
 export default {artefactFound};
