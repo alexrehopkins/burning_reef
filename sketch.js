@@ -2,8 +2,6 @@ import * as THREE from './node_modules/three/build/three.module.js';
 import { FirstPersonControls } from './node_modules/three/examples/jsm/controls/FirstPersonControls.js';
 import { ImprovedNoise } from './node_modules/three/examples/jsm/math/ImprovedNoise.js';
 import { GLTFLoader } from './node_modules/three/examples/jsm/loaders/GLTFLoader.js';
-import { GodRaysFakeSunShader, GodRaysDepthMaskShader, GodRaysCombineShader, GodRaysGenerateShader } from './node_modules/three/examples/jsm/shaders/GodRaysShader.js';
-
 
 let container;
 let camera, controls, scene, renderer, hlight, directionalLight;
@@ -28,10 +26,6 @@ const worldWidth = 560, worldDepth = 560;
 const clock = new THREE.Clock();
 const respawnDistance = 200;
 let sky;
-
-const postprocessing = {enabled: true};
-const godrayRenderTargetResolutionMultiplier = 1.0 / 4.0;
-
 
 init();
 animate();
