@@ -1,7 +1,7 @@
-import * as THREE from 'three.module.js';//'./node_modules/three/build/three.module.js';
-import { FirstPersonControls } from 'FirstPersonControls.js';//'./node_modules/three/examples/jsm/controls/FirstPersonControls.js';
-import { ImprovedNoise } from 'ImprovedNoise.js';//'./node_modules/three/examples/jsm/math/ImprovedNoise.js';
-import { GLTFLoader } from 'GLTFLoader.js';//'./node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from './three.module.js';//'./node_modules/three/build/three.module.js';
+import { FirstPersonControls } from './FirstPersonControls.js';//'./node_modules/three/examples/jsm/controls/FirstPersonControls.js';
+import { ImprovedNoise } from './ImprovedNoise.js';//'./node_modules/three/examples/jsm/math/ImprovedNoise.js';
+import { GLTFLoader } from './GLTFLoader.js';//'./node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 
 let container;
 let camera, controls, scene, renderer, hlight, directionalLight;
