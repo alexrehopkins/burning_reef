@@ -59,7 +59,6 @@ function init() {
         vertices[ j + 1 ] = data[ i ] * 10;
 
     }
-
     hlight = new THREE.AmbientLight (0x404040,2);
     scene.add(hlight);
     directionalLight = new THREE.DirectionalLight(0x61d3ff,0.5);
@@ -74,22 +73,21 @@ function init() {
     const vertexShader = document.getElementById( 'vertexShader' ).textContent;
 	const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
 	const uniforms = {
-		topColor: { value: new THREE.Color( 0x29a4d2 ) },
-        bottomColor: { value: new THREE.Color( 0x0c4b63 ) },
-        offset: { value: 900 },
-		exponent: { value: 0.6 }
+		topColor: { value: new THREE.Color( 0xB0EEFF ) },
+        bottomColor: { value: new THREE.Color( 0x3689a8 ) },
+        //offset: { value: 900 },
+		exponent: { value: 0.9 }
 	};
-	uniforms.topColor.value.copy( directionalLight.color );
+	//uniforms.topColor.value.copy( directionalLight.color );
 	const skyGeo = new THREE.SphereGeometry( 7*respawnDistance, 32, 15 );
 	const skyMat = new THREE.ShaderMaterial( {
 		uniforms: uniforms,
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader,
 		side: THREE.BackSide,
-        transparent: true,
-        opacity: 0.5
     } );
     sky = new THREE.Mesh( skyGeo, skyMat );
+    
 	scene.add( sky );
 
 
@@ -100,7 +98,7 @@ function init() {
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
 
-    mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { map: texture } ) );
+    mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { map: texture } ) );
     scene.add( mesh );
 
     renderer = new THREE.WebGLRenderer({antialias: true}); // alpha: true
@@ -119,16 +117,16 @@ function init() {
 
     //coral import
     for(let i = 0; i < numIndividualAssets; i++){
-        loadCoral('assets/coral1.gltf',4+Math.random()*20,"scene");
-        loadCoral('assets/coral2.gltf',4+Math.random()*20,"scene"); 
-        loadCoral('assets/coral3.gltf',4+Math.random()*20,"scene");
-        loadCoral('assets/coral4.gltf',4+Math.random()*20,"scene");
-        loadCoral('assets/seaweed1.gltf',4+Math.random()*20,"scene");
-        loadCoral('assets/kelp1.gltf',14+Math.random()*20,"scene");
+        loadCoral('assets/coral1.gltf',14+Math.random()*10,"scene");
+        loadCoral('assets/coral2.gltf',14+Math.random()*10,"scene"); 
+        loadCoral('assets/coral3.gltf',4+Math.random()*10,"scene");
+        loadCoral('assets/coral4.gltf',14+Math.random()*10,"scene");
+        loadCoral('assets/coral5.gltf',24+Math.random()*10,"scene");
+        loadCoral('assets/seaweed1.gltf',14+Math.random()*10,"scene");
+        loadCoral('assets/kelp1.gltf',14+Math.random()*15,"scene");
         loadCoral('assets/fish1.gltf',4+Math.random()*5 ,"fish");
     }
-    loadCoral('assets/coral2.gltf',10,"artefact1");
-
+    loadCoral('assets/coral5.gltf',10,"artefact1");
 }
 
 function onWindowResize() {
@@ -202,12 +200,11 @@ function generateTexture( data, width, height ) {
 
         shade = vector3.dot( sun );
 
-        imageData[ i ] = ( 96 + shade * 32 ) * ( 0.5 + data[ j ] * 0.007 );
-        imageData[ i + 1 ] = ( 160 + shade * 24 ) * ( 0.5 + data[ j ] * 0.007 );
-        imageData[ i + 2 ] = ( 128 +  shade * 24 ) * ( 0.5 + data[ j ] * 0.007 );
+        imageData[ i ] = ( 64 + shade * 64 ) * ( 0.5 + data[ j ] * 0.47 );
+        imageData[ i + 1 ] = ( 96 + shade * 48 ) * ( 0.5 + data[ j ] * 0.47 );
+        imageData[ i + 2 ] = ( 16 +  shade * 48 ) * ( 0.5 + data[ j ] * 0.47 );
 
     }
-
     context.putImageData( image, 0, 0 );
 
     // Scaled 4x
@@ -251,7 +248,8 @@ function animate() {
         resetCounter = 0;
         
     }
-    sky.position.set(camera.position.x,camera.position.y,camera.position.z); //reset skybox to camera
+    sky.position.set(camera.position.x,camera.position.y+100,camera.position.z); //reset skybox to camera
+    directionalLight.position.set(camera.position.x,camera.position.y+1000,camera.position.z);
     for (let f = 0; f < fish.length; f++) {
         handleFish(f);
     }
@@ -278,6 +276,7 @@ function render() {
         if (1-(timeLeft/100) < fish.length/numIndividualAssets) {
             for (let i = 0; i < fish.length; i++){
                 if (fish.length > 1){
+                    coral[fish[fish.length-1]].scale.set(0.01,0.01,0.01);
                     fish.pop(); //remove a fish from array if there are multiple fish in the array, and the percentage of remaining fish is larger that than the percentage of remaining time. Could be used as a final score perhaps?
                 }
             }
@@ -344,7 +343,7 @@ function handleCoral(coralNum) {
         coralPosX = Math.round((halfOfDistanceDepth+camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
         coralPosZ = Math.round((halfOfDistanceDepth+camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
         
-        let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
+        let coralPosY = -5+(10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)]);
         
         coral[coralNum].position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
     } 
@@ -368,7 +367,7 @@ function handleCoral(coralNum) {
 
 function handleFish(FishNum) {
     coral[fish[FishNum]].translateZ(2);
-    coral[fish[FishNum]].translateY(0.01);
+    coral[fish[FishNum]].translateY(0.1);
     coral[fish[FishNum]].rotateY((Math.random()*0.1)-(Math.random()*0.1));
 }
 
