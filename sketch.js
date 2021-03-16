@@ -200,9 +200,9 @@ function generateTexture( data, width, height ) {
 
         shade = vector3.dot( sun );
 
-        imageData[ i ] = ( 64 + shade * 64 ) * ( 0.5 + data[ j ] * 0.47 );
-        imageData[ i + 1 ] = ( 96 + shade * 48 ) * ( 0.5 + data[ j ] * 0.47 );
-        imageData[ i + 2 ] = ( 16 +  shade * 48 ) * ( 0.5 + data[ j ] * 0.47 );
+        imageData[ i ] = ( 96 + shade * 64 ) * ( 0.5 + data[ j ] * 0.07 );
+        imageData[ i + 1 ] = ( 96 + shade * 48 ) * ( 0.5 + data[ j ] * 0.07 );
+        imageData[ i + 2 ] = ( 16 +  shade * 48 ) * ( 0.5 + data[ j ] * 0.07 );
 
     }
     context.putImageData( image, 0, 0 );
