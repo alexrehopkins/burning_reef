@@ -47,8 +47,7 @@ function init() {
     data = generateHeight( worldWidth, worldDepth );
 
     camera.position.set( 0, 810, 0 );
-    camera.lookAt( 0, 810, 10 );
-
+    camera.lookAt( 0, 800, 10 );
     const geometry = new THREE.PlaneBufferGeometry( worldDirectWidth, worldDirectDepth, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
 
@@ -127,6 +126,7 @@ function init() {
         loadCoral('assets/fish1.gltf',4+Math.random()*5 ,"fish");
     }
     loadCoral('assets/coral5.gltf',10,"artefact1");
+    beginAV();
 }
 
 function onWindowResize() {
@@ -250,6 +250,7 @@ function animate() {
     }
     sky.position.set(camera.position.x,camera.position.y+100,camera.position.z); //reset skybox to camera
     directionalLight.position.set(camera.position.x,camera.position.y+1000,camera.position.z);
+    floorCollision();
     for (let f = 0; f < fish.length; f++) {
         handleFish(f);
     }
@@ -338,7 +339,6 @@ function handleArtefact() {
 function handleCoral(coralNum) {
     let coralPosX = camera.position.x;
     let coralPosZ = camera.position.z;
-    //console.log(camera.position);
     if (coral[coralNum].position.x == 0 && coral[coralNum].position.z == 0) {
         coralPosX = Math.round((halfOfDistanceDepth+camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
         coralPosZ = Math.round((halfOfDistanceDepth+camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
@@ -366,9 +366,40 @@ function handleCoral(coralNum) {
 }
 
 function handleFish(FishNum) {
-    coral[fish[FishNum]].translateZ(2);
-    coral[fish[FishNum]].translateY(0.1);
-    coral[fish[FishNum]].rotateY((Math.random()*0.1)-(Math.random()*0.1));
+    let fishModel = coral[fish[FishNum]];
+
+    fishModel.translateZ(2);
+
+    let fishX = Math.round((halfOfDistanceWidth+fishModel.position.x)/spaceBetweenPoints)*spaceBetweenPoints;
+    let fishZ = Math.round((halfOfDistanceDepth+fishModel.position.z)/spaceBetweenPoints)*spaceBetweenPoints;
+    let floorY = 10*data[(fishZ)/(spaceBetweenPoints)*worldWidth+fishX/(spaceBetweenPoints)]
+    floorY = fishModel.position.y-(floorY+70);
+    if (floorY < 0) {
+        fishModel.position.y += - floorY*0.04;   
+    } else {
+        fishModel.position.y -= (Math.random()*0.4);
+    }
+
+
+    fishModel.rotateY((Math.random()*0.1)-(Math.random()*0.1));
+
+}
+
+function floorCollision() {
+    let cameraX = Math.round((halfOfDistanceWidth+camera.position.x)/spaceBetweenPoints)*spaceBetweenPoints;
+    let cameraZ = Math.round((halfOfDistanceDepth+camera.position.z)/spaceBetweenPoints)*spaceBetweenPoints;
+    let floorY = 10*data[(cameraZ)/(spaceBetweenPoints)*worldWidth+cameraX/(spaceBetweenPoints)]
+    floorY = camera.position.y-(floorY+70);
+    if (floorY < 0) {
+        camera.position.y += - floorY*0.04;
+        
+    }
+}
+
+function beginAV() {
+    camera.position.x = 0;
+    camera.position.z = 0;
+    camera.position.y = data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceWidth/(spaceBetweenPoints)]
 }
 
 export default {artefactFound};
