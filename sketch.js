@@ -19,7 +19,7 @@ let halfOfDistanceWidth;
 let halfOfDistanceDepth;
 let resetCounter = 0;
 let spaceBetweenPoints;
-const numIndividualAssets = 15;
+const numIndividualAssets = 300;
 let meshes = [];
 const dummy = new THREE.Object3D();
 let matrix = new THREE.Matrix4();
@@ -118,13 +118,13 @@ function init() {
     window.addEventListener( 'resize', onWindowResize, false );
 
     //coral import
-    loadCoral('assets/coral1.gltf',14,"scene",0);
+    loadCoral('assets/coral1.gltf',18,"scene",0);
     loadCoral('assets/coral2.gltf',14,"scene",50); 
-    loadCoral('assets/coral3.gltf',4,"scene",270);
+    loadCoral('assets/coral3.gltf',10,"scene",270);
     loadCoral('assets/coral4.gltf',14,"scene",240);
     loadCoral('assets/coral5.gltf',24,"scene",65);
-    loadCoral('assets/seaweed1.gltf',14,"scene",90);
-    loadCoral('assets/kelp1.gltf',14,"scene",120);
+    loadCoral('assets/seaweed1.gltf',20,"scene",90);
+    loadCoral('assets/kelp1.gltf',34,"scene",120);
     loadCoral('assets/fish1.gltf',4,"fish",10);
     loadCoral('assets/fish2.gltf',4,"fish",210);
     loadCoral('assets/coral1.gltf',10,"artefact1",10);
@@ -246,7 +246,9 @@ function animate() {
     if (resetCounter >= 200) { //run every 50 frames
 
         for (let f = 0; f < newcoral; f++) {
-            handleCoral(f);
+            for (let g = 0; g < numIndividualAssets; g++) {
+                handleCoral(f,g,20); //20 is a placeholder should have scaler here, but importing is weird
+            }
         }
         resetCounter = 0;
         
@@ -265,16 +267,8 @@ function animate() {
 
 function render() {
     for (let i = 0; i<newcoral;i++){
-        if (meshes[0]) {
-
-            //dummy.position.set(30,800,0);
-            //dummy.updateMatrix();
-            //meshes[0].setMatrixAt( 0, dummy.matrix );
-            
-            //dummy.position.set(60,800,0);
-            //dummy.updateMatrix();
-            //meshes[0].setMatrixAt( 1, dummy.matrix );
-            meshes[0].instanceMatrix.needsUpdate = true;
+        if (meshes[i]) {
+            meshes[i].instanceMatrix.needsUpdate = true;
         }
     }
     controls.update( clock.getDelta() );
@@ -322,11 +316,8 @@ function loadCoral(assetLocation,scaler, type,colorType) {
                     meshes[newcoral].instanceMatrix.setUsage( THREE.DynamicDrawUsage);
                     
                     scene.add( meshes[newcoral] );
-                    handleCoral(newcoral);
-                    for (let i = 0; i < numIndividualAssets; i++ ) {
-                        let scale = scaler+(10-Math.random()*5);
-                        dummy.scale.set(scale,scale,scale);
-                        meshes[newcoral].setMatrixAt( i, dummy.matrix );
+                    for (let g = 0; g < numIndividualAssets; g++) {
+                        handleCoral(newcoral,g,scaler);
                     }
                     newcoral++;
                 }
@@ -357,13 +348,11 @@ function handleArtefact() {
     }
 }
 
-function handleCoral(coralNum) {
+function handleCoral(coralNum,i,scaler) {
     let coralPosX = camera.position.x;
     let coralPosZ = camera.position.z;
     
-    
-    for (let i = 0; i < numIndividualAssets; i++){
-        
+    //for (let i = 0; i < numIndividualAssets; i++){
         meshes[coralNum].getMatrixAt(i,matrix);
         let positionHolder = new THREE.Vector3();
         positionHolder.setFromMatrixPosition(matrix );
@@ -373,8 +362,13 @@ function handleCoral(coralNum) {
             coralPosX = Math.round((halfOfDistanceDepth+camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
             coralPosZ = Math.round((halfOfDistanceDepth+camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
             
-            let coralPosY = -5+(10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)]);
+            let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
+            
+            coralPosX += (Math.random()-Math.random())*spaceBetweenPoints;
+            coralPosZ += (Math.random()-Math.random())*spaceBetweenPoints;
+
             dummy.position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
+            dummy.scale.set(scaler*(Math.random()+0.5),scaler*(Math.random()+0.5),scaler*(Math.random()+0.5));
             dummy.updateMatrix();
             meshes[coralNum].setMatrixAt( i, dummy.matrix );
         } 
@@ -388,16 +382,18 @@ function handleCoral(coralNum) {
             coralPosX = Math.round((halfOfDistanceWidth+coralPosX)/spaceBetweenPoints)*spaceBetweenPoints;
             coralPosZ = Math.round((halfOfDistanceDepth+coralPosZ)/spaceBetweenPoints)*spaceBetweenPoints;
             
+
             let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
-            
+            coralPosX += (Math.random()-Math.random())*spaceBetweenPoints;
+            coralPosZ += (Math.random()-Math.random())*spaceBetweenPoints;
             //if fish, raise y up by 20, then apply a movement in a direction every frame, with a small chance to apply a small rotation.
             dummy.position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
+            dummy.scale.set(scaler*(Math.random()+0.5),scaler*(Math.random()+0.5),scaler*(Math.random()+0.5));
             dummy.updateMatrix();
             meshes[coralNum].setMatrixAt( i, dummy.matrix );
-            meshes[coralNum].instanceMatrix.needsUpdate = true;
-            //coral[coralNum].position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
+            
         }
-    }
+    //}
 }
 
 function handleFish(FishNum) {
