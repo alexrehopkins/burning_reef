@@ -18,7 +18,7 @@ let halfOfDistanceWidth;
 let halfOfDistanceDepth;
 let resetCounter = 0;
 let spaceBetweenPoints;
-const numIndividualAssets = 60;
+const numIndividualAssets = 600;
 let meshes = [];
 let matrix = new THREE.Matrix4();
 
@@ -56,8 +56,8 @@ function init() {
     halfOfDistanceDepth = worldDirectDepth/2;
     spaceBetweenPoints = (worldDirectWidth/worldWidth+worldDirectDepth/worldDepth)/2;
     scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x29a4d2 );
-    scene.fog = new THREE.FogExp2( 0x3689a8, 0.001 ); //0.001 for fog
+    scene.background = new THREE.Color( 0x0099ff );
+    scene.fog = new THREE.FogExp2( 0x26a9ff, 0.001 ); //0.001 for fog
 
     data = generateHeight( worldWidth, worldDepth );
 
@@ -88,8 +88,8 @@ function init() {
 	const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
 	const uniforms = {
 		topColor: { value: new THREE.Color( 0xB0EEFF ) },
-        bottomColor: { value: new THREE.Color( 0x3689a8 ) },
-        //offset: { value: 900 },
+        bottomColor: { value: new THREE.Color( 0x0099ff ) },
+        offset: { value: 100 },
 		exponent: { value: 0.9 }
 	};
 	const skyGeo = new THREE.SphereGeometry( 7*respawnDistance, 32, 15 );
