@@ -24,7 +24,7 @@ var FirstPersonControls = function ( object, domElement ) {
 	this.lookSpeed = 0.005;
 
 	this.lookVertical = true;
-	this.autoForward = true;
+	this.autoForward = false;
 
 	this.activeLook = true;
 
