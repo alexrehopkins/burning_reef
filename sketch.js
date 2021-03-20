@@ -21,7 +21,9 @@ let spaceBetweenPoints;
 const numIndividualAssets = 500;
 let meshes = [];
 let matrix = new THREE.Matrix4();
-let gameState = -1; //-1 title screen, 0 playing, 1 artefact, 2 artefacts
+let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 artefact, 2 artefacts
+let assetsLoaded = 0;
+
 
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
 const worldWidth = 560, worldDepth = 560;
@@ -37,7 +39,7 @@ let loadingArray = [
     'assets/coral4.gltf',14,"scene",240,
     'assets/coral5.gltf',24,"scene",65,
     'assets/fish1.gltf',8,"fish",10,
-    'assets/fish2.gltf',10,"fish",210,
+    'assets/fish2.gltf',12,"fish",65,
     'assets/seaweed1.gltf',20,"scene",90,
     'assets/kelp1.gltf',34,"scene",120,
     'assets/coral1.gltf',10,"artefact1",10
@@ -248,6 +250,7 @@ function generateTexture( data, width, height ) {
 //
 
 function animate() {
+    startAnim();
     resetCounter++;
     requestAnimationFrame( animate );
     if (resetCounter >= 200) { //run every 50 frames
@@ -312,7 +315,6 @@ function render() {
             }
         }
     }
-    
 }
 
 function loadCoral(whichCoral, assetLocation,scaler,type,colorType) {
@@ -343,7 +345,9 @@ function loadCoral(whichCoral, assetLocation,scaler,type,colorType) {
         // called while loading is progressing
         function ( xhr ) {
             if(xhr.loaded / xhr.total == 1){
-                
+                assetsLoaded++;
+                if (assetsLoaded*4 == loadingArray.length){
+                }
             }
            // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
@@ -463,9 +467,22 @@ function beginAV() {
     camera.position.y = data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceWidth/(spaceBetweenPoints)];
     controls.enabled = true;
     gameState = 0;
+    resetCounter = 0;
     document.getElementById("enterButton").style = "display: none;";
     document.getElementById("info").style = "display: none;";
     document.getElementById("myBar").style = "display: block;";
+}
+
+function startAnim() {
+    if (gameState == -2 && assetsLoaded*4 == loadingArray.length){
+        gameState = -1;
+    }
+    if (gameState == -1 && timeLeft < 1) {
+        timeLeft += 0.01;
+        document.getElementById("container").style = "opacity: "+timeLeft;
+        document.getElementById("enterButton").style = "opacity: "+timeLeft;
+        document.getElementById("enterButton").style = "top: "+((timeLeft*60)-20)+"%";
+    }
 }
 
 document.getElementById('enterButton').addEventListener("click", function() {beginAV()}, false);
