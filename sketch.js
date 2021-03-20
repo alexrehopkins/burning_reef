@@ -21,6 +21,7 @@ let spaceBetweenPoints;
 const numIndividualAssets = 500;
 let meshes = [];
 let matrix = new THREE.Matrix4();
+let gameState = -1; //-1 title screen, 0 playing, 1 artefact, 2 artefacts
 
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
 const worldWidth = 560, worldDepth = 560;
@@ -51,7 +52,6 @@ function init() {
 
     camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 8*respawnDistance ); //last value is render distance
 
-
     halfOfDistanceWidth = worldDirectWidth/2;
     halfOfDistanceDepth = worldDirectDepth/2;
     spaceBetweenPoints = (worldDirectWidth/worldWidth+worldDirectDepth/worldDepth)/2;
@@ -61,8 +61,8 @@ function init() {
 
     data = generateHeight( worldWidth, worldDepth );
 
-    camera.position.set( 0, 810, 0 );
-    camera.lookAt( 0, 800, 10 );
+    camera.position.set( 0, 710, 0 );
+    camera.lookAt( 0, 500, 150 );
     const geometry = new THREE.PlaneBufferGeometry( worldDirectWidth, worldDirectDepth, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
 
@@ -125,6 +125,8 @@ function init() {
     controls.verticalMax = 3*Math.PI/4;
     controls.verticalMin = Math.PI/4;
     controls.constrainVertical = true;
+    controls.autoForward = false;
+    controls.enabled = false;
 
     window.addEventListener( 'resize', onWindowResize, false );
 
@@ -133,7 +135,6 @@ function init() {
         
         loadCoral(i/4,loadingArray[i],loadingArray[i+1],loadingArray[i+2],loadingArray[i+3]);
     }
-    beginAV();
 }
 
 function onWindowResize() {
@@ -276,6 +277,14 @@ function animate() {
 }
 
 function render() {
+    if (controls.movementSpeed > 100) {
+        camera.fov = ((controls.movementSpeed-100)/16)+50;
+        camera.updateProjectionMatrix();
+        controls.movementSpeed--;
+    } else {
+        controls.autoForward = false;
+    }//boost mechanic
+
     for (let i = 0; i<newcoral;i++){
         if (meshes[i]) {
             meshes[i].instanceMatrix.needsUpdate = true;
@@ -286,7 +295,7 @@ function render() {
     renderer.render( scene, camera );
     
     //timeline
-    if (timeLeft < 100) {
+    if (timeLeft < 100 && gameState > -1) {
         timeLeft = timeLeft + 0.01; //every frame degrades
         var elem = document.getElementById("myBar");
         handleArtefact();
@@ -355,6 +364,8 @@ function handleArtefact() {
         artefact.position.set(artefactX,800,artefactZ);
         console.log("WELL DONE");
         artefactFound[0] = 1;
+        controls.autoForward = true;
+        controls.movementSpeed = 500;
     }
 }
 
@@ -449,7 +460,14 @@ function beginAV() {
     timeLeft = 0;
     camera.position.x = 0;
     camera.position.z = 0;
-    camera.position.y = data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceWidth/(spaceBetweenPoints)]
+    camera.position.y = data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceWidth/(spaceBetweenPoints)];
+    controls.enabled = true;
+    gameState = 0;
+    document.getElementById("enterButton").style = "display: none;";
+    document.getElementById("info").style = "display: none;";
+    document.getElementById("myBar").style = "display: block;";
 }
+
+document.getElementById('enterButton').addEventListener("click", function() {beginAV()}, false);
 
 export default {artefactFound};

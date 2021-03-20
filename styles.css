@@ -1,3 +1,5 @@
+@import url(//fonts.googleapis.com/css?family=Lato:300:400);
+
 html {
     width: 100%;
     height: 100%;
@@ -26,6 +28,7 @@ body {
   width: 0%;
   height: 10px;
   background-color: blue;
+  display: none;
 }
 
 #container {
@@ -34,10 +37,15 @@ body {
 }
 
 #menuOpener {
-  bottom: 30px;
+  bottom: 1%;
   position: absolute;
   z-index: 2;
-  right: 0px;
+  right: 1%;
+  background-color: rgba(0, 47, 85, 0.2);
+  color: aliceblue;
+  font-size: 4vh;
+  font-family: 'Lato', sans-serif;
+  border: 3px solid aliceblue;
 }
 
 #menu {
@@ -54,4 +62,47 @@ body {
 #imgurl {
   width: 20%;
   padding-left: 40%;
+}
+
+#startButton {
+  width: 100%;
+  height: 100%;
+  right: 0%;
+  top: 0%;
+  z-index: 2;
+  font-size: 10vw;
+  text-align: center;
+  font-family: 'Lato', sans-serif;
+  color: aliceblue;
+  background-color: rgba(0, 35, 82, 0.5);
+  position: absolute;
+}
+
+#info {
+  right: -1%;
+  top: 1%;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  font-size: 20px;
+  font-family: sans-serif;
+  color: aliceblue;
+  position: absolute;
+}
+
+#enterButton {
+  top: 50%;
+  width: 60%;
+  right: 20%;
+  z-index: 3!important;
+  font-size: 4vw;
+  font-family: 'Lato', sans-serif;
+  position: absolute;
+  color: aliceblue;
+  background-color: rgba(0, 47, 85, 0.2);
+  border: 3px solid aliceblue;
+}
+
+#enterButton:hover,#menuOpener:hover{
+  background-color:rgba(0, 47, 85, 0.4);
 }

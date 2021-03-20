@@ -62,8 +62,6 @@ function updatePage(pageIncrement) {
     
 }
 
-
-
 document.getElementById('menuOpener').addEventListener("click", function() {openMenu()}, false);
 document.getElementById('menuPrev').addEventListener("click", function() {updatePage(-1)}, false);
 document.getElementById('menuNext').addEventListener("click", function() {updatePage(1)}, false);

@@ -7,7 +7,11 @@
 
 <body>
     <div id="container"></div>
-    
+    <button id="enterButton">ENTER THE <br> BURNING REEF</button>
+    <p id="info">Use Mouse to look around, click to move
+    <br>Collect artefacts to learn about ocean degradation and prevent the death of the reef!
+    <br>Created by Alex Hopkins
+    </p>
     <div id="myProgress">
         <div id="myBar"></div>
     </div>
@@ -20,11 +24,10 @@
         <p id="description">Description of artefact1</p>
         <img id="menuNext"></button>
     </div>
-    <button id="menuOpener">Menu</button>
+    <button id="menuOpener">MENU</button>
     <script type="x-shader/x-vertex" id="vertexShader">
 
         varying vec3 vWorldPosition;
-        //skybox gradient
         void main() {
 
             vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
@@ -42,7 +45,6 @@
         uniform vec3 bottomColor;
         uniform float offset;
         uniform float exponent;
-        //skybox gradient
         varying vec3 vWorldPosition;
 
         void main() {
