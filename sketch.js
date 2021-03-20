@@ -18,14 +18,14 @@ let halfOfDistanceWidth;
 let halfOfDistanceDepth;
 let resetCounter = 0;
 let spaceBetweenPoints;
-const numIndividualAssets = 600;
+const numIndividualAssets = 500;
 let meshes = [];
 let matrix = new THREE.Matrix4();
 
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
 const worldWidth = 560, worldDepth = 560;
 const clock = new THREE.Clock();
-const respawnDistance = 300;
+const respawnDistance = 250;
 let sky;
 
 //object array for loading coral, artefacts loaded as gltf, must go at end with artefact label

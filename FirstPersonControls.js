@@ -24,7 +24,7 @@ var FirstPersonControls = function ( object, domElement ) {
 	this.lookSpeed = 0.005;
 
 	this.lookVertical = true;
-	this.autoForward = false;
+	this.autoForward = true;
 
 	this.activeLook = true;
 
@@ -37,7 +37,7 @@ var FirstPersonControls = function ( object, domElement ) {
 	this.verticalMin = 0;
 	this.verticalMax = Math.PI;
 
-	this.mouseDragOn = false;
+	this.mouseDragOn = true;
 
 	// internals
 
