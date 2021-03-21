@@ -6,12 +6,12 @@ import { GLTFLoader } from './GLTFLoader.js';//'./node_modules/three/examples/js
 let container;
 let camera, controls, scene, renderer, hlight, directionalLight;
 let fish = [];
-let skymesh, texture;
+let landmesh, texture;
 let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and ending
 let artefactX = 0;
 let artefactZ = 100;
 let artefact;
-let artefactFound = [0,0,0,0,0,0];
+let artefactFound = [0,0,0,0,0,0,0,0];
 let newcoral = 0;
 let data;
 let halfOfDistanceWidth;
@@ -23,12 +23,12 @@ let meshes = [];
 let matrix = new THREE.Matrix4();
 let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 artefact, 2 artefacts
 let assetsLoaded = 0;
-
+let music = new Audio('assets/underwatermusic.wav');
 
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
 const worldWidth = 560, worldDepth = 560;
 const clock = new THREE.Clock();
-const respawnDistance = 250;
+const respawnDistance = 200;
 let sky;
 
 //object array for loading coral, artefacts loaded as gltf, must go at end with artefact label
@@ -67,7 +67,6 @@ function init() {
     camera.lookAt( 0, 500, 150 );
     const geometry = new THREE.PlaneBufferGeometry( worldDirectWidth, worldDirectDepth, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
-
     const vertices = geometry.attributes.position.array;
 
     for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
@@ -75,6 +74,7 @@ function init() {
         vertices[ j + 1 ] = data[ i ] * 10;
 
     }
+    console.log(geometry.attributes)
     hlight = new THREE.AmbientLight (0x404040,2);
     scene.add(hlight);
     directionalLight = new THREE.DirectionalLight(0x61d3ff,0.5);
@@ -113,8 +113,8 @@ function init() {
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
 
-    skymesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { map: texture } ) );
-    scene.add( skymesh );
+    landmesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { map: texture } ) );
+    scene.add( landmesh );
 
     renderer = new THREE.WebGLRenderer({antialias: true}); // alpha: true
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -240,9 +240,7 @@ function generateTexture( data, width, height ) {
         imageData[ i + 2 ] += v;
 
     }
-
     context.putImageData( image, 0, 0 );
-
     return canvasScaled;
 
 }
@@ -253,7 +251,7 @@ function animate() {
     startAnim();
     resetCounter++;
     requestAnimationFrame( animate );
-    if (resetCounter >= 200) { //run every 50 frames
+    if (resetCounter >= 50) { //run every 50 frames
 
         for (let f = 0; f < newcoral; f++) {
             for (let g = 0; g < numIndividualAssets; g++) {
@@ -304,16 +302,6 @@ function render() {
         handleArtefact();
         elem.style.width = (timeLeft) + "%";
         document.getElementById("container").style.filter = "grayscale("+timeLeft/100+")";
-
-        //reduce fish as time progresses
-        if (1-(timeLeft/100) < fish.length/numIndividualAssets) {
-            for (let i = 0; i < fish.length; i++){
-                if (fish.length > 1){
-                    //coral[fish[fish.length-1]].scale.set(0.01,0.01,0.01);
-                    //fish.pop(); //remove a fish from array if there are multiple fish in the array, and the percentage of remaining fish is larger that than the percentage of remaining time. Could be used as a final score perhaps?
-                }
-            }
-        }
     }
 }
 
@@ -379,50 +367,39 @@ function handleCoral(coralNum,i) {
     let dummy = new THREE.Object3D();
     meshes[coralNum].getMatrixAt(i,matrix);
     let positionHolder = new THREE.Vector3();
-    let scaler = loadingArray[coralNum*4+1];
     positionHolder.setFromMatrixPosition(matrix );
-    
     matrix.setPosition(positionHolder);
     if (positionHolder.x == 0 && positionHolder.z == 0) {
-        coralPosX = Math.round((halfOfDistanceDepth+camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
-        coralPosZ = Math.round((halfOfDistanceDepth+camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance)/spaceBetweenPoints)*spaceBetweenPoints;
+        coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance; //random from -100 to 100
+        coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
         
-        let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
-        
-        coralPosX += (Math.random()-Math.random())*spaceBetweenPoints/3; //small bit of randomisation to stop overlapping
-        coralPosZ += (Math.random()-Math.random())*spaceBetweenPoints/3;
-
-        dummy.position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
-        dummy.scale.set(scaler+(Math.random()*4-2),scaler+(Math.random()*4-2),scaler+(Math.random()*4-2));
-        dummy.rotation.y = Math.random()*7;
-        dummy.updateMatrix();
-        meshes[coralNum].setMatrixAt( i, dummy.matrix );
+        coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy);
     } 
     else if (Math.hypot(positionHolder.x-camera.position.x,positionHolder.z-camera.position.z) > 11*respawnDistance){ //200 distance away from camera to despawn
         while (Math.hypot(coralPosX-camera.position.x,coralPosZ-camera.position.z) < 8*respawnDistance) { //80 distance away from camera to spawn
             coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance; //random from -100 to 100
             coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
         }
-
-        //convert to points on landscape by rounding
-        coralPosX = Math.round((halfOfDistanceWidth+coralPosX)/spaceBetweenPoints)*spaceBetweenPoints;
-        coralPosZ = Math.round((halfOfDistanceDepth+coralPosZ)/spaceBetweenPoints)*spaceBetweenPoints;
-        
-        let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
-
-        coralPosX += (Math.random()-Math.random())*spaceBetweenPoints/3; //small bit of randomisation to stop overlapping
-        coralPosZ += (Math.random()-Math.random())*spaceBetweenPoints/3;
-
-        coralPosX += (Math.random()-Math.random())*spaceBetweenPoints;
-        coralPosZ += (Math.random()-Math.random())*spaceBetweenPoints;
-
-        dummy.position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
-        dummy.scale.set(scaler,scaler,scaler);
-        dummy.rotation.y = Math.random()*7;
-        dummy.updateMatrix();
-        meshes[coralNum].setMatrixAt( i, dummy.matrix );
-        
+        coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy); 
     }
+}
+
+function coralPlacer(coralNum,i , coralPosX,coralPosZ,dummy) {
+    //convert to points on landscape by rounding
+    coralPosX = Math.round((halfOfDistanceWidth+coralPosX)/spaceBetweenPoints)*spaceBetweenPoints;
+    coralPosZ = Math.round((halfOfDistanceDepth+coralPosZ)/spaceBetweenPoints)*spaceBetweenPoints;
+    
+    let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
+
+    coralPosX += (Math.random()-Math.random())*spaceBetweenPoints/5; //small bit of randomisation to stop overlapping
+    coralPosZ += (Math.random()-Math.random())*spaceBetweenPoints/5;
+
+    dummy.position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
+    let scaler = loadingArray[coralNum*4+1];
+    dummy.scale.set(scaler+(Math.random()*4-2),scaler+(Math.random()*4-2),scaler+(Math.random()*4-2));
+    dummy.rotation.y = Math.random()*7;
+    dummy.updateMatrix();
+    meshes[coralNum].setMatrixAt( i, dummy.matrix );
 }
 
 function handleFish(coralNum, i) {
@@ -442,7 +419,7 @@ function handleFish(coralNum, i) {
     } else {
         dummy.position.y -= (Math.random()*0.4);
     }
-    dummy.rotation.y += ((Math.random()*0.1)-(Math.random()*0.1));
+    dummy.rotation.y += ((Math.random()*0.07)-(Math.random()*0.07));
     dummy.scale.set(scaler,scaler,scaler);
     dummy.translateZ(2);
     dummy.updateMatrix();
@@ -452,7 +429,7 @@ function handleFish(coralNum, i) {
 function floorCollision() {
     let cameraX = Math.round((halfOfDistanceWidth+camera.position.x)/spaceBetweenPoints)*spaceBetweenPoints;
     let cameraZ = Math.round((halfOfDistanceDepth+camera.position.z)/spaceBetweenPoints)*spaceBetweenPoints;
-    let floorY = 10*data[(cameraZ)/(spaceBetweenPoints)*worldWidth+cameraX/(spaceBetweenPoints)]
+    let floorY = 10*data[(cameraZ)/(spaceBetweenPoints)*worldWidth+cameraX/(spaceBetweenPoints)];
     floorY = camera.position.y-(floorY+70);
     if (floorY < 0) {
         camera.position.y += - floorY*0.04;
@@ -462,9 +439,10 @@ function floorCollision() {
 
 function beginAV() {
     timeLeft = 0;
+    music.play();
     camera.position.x = 0;
     camera.position.z = 0;
-    camera.position.y = data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceWidth/(spaceBetweenPoints)];
+    camera.position.y = 10+10*data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceDepth/(spaceBetweenPoints)];;
     controls.enabled = true;
     gameState = 0;
     resetCounter = 0;
@@ -481,7 +459,7 @@ function startAnim() {
         timeLeft += 0.01;
         document.getElementById("container").style = "opacity: "+timeLeft;
         document.getElementById("enterButton").style = "opacity: "+timeLeft;
-        document.getElementById("enterButton").style = "top: "+((timeLeft*60)-20)+"%";
+        document.getElementById("enterButton").style = "top: "+((timeLeft*80)-40)+"%";
     }
 }
 
