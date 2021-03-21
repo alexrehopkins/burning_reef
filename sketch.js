@@ -5,11 +5,10 @@ import { GLTFLoader } from './GLTFLoader.js';//'./node_modules/three/examples/js
 
 let container;
 let camera, controls, scene, renderer, hlight, directionalLight;
-let fish = [];
 let landmesh, texture;
 let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and ending
 let artefactX = 0;
-let artefactZ = 100;
+let artefactZ = 300;
 let artefact;
 let artefactFound = [0,0,0,0,0,0,0,0];
 let newcoral = 0;
@@ -64,7 +63,7 @@ function init() {
     data = generateHeight( worldWidth, worldDepth );
 
     camera.position.set( 0, 710, 0 );
-    camera.lookAt( 0, 500, 150 );
+    camera.lookAt( 0, 300, 150 );
     const geometry = new THREE.PlaneBufferGeometry( worldDirectWidth, worldDirectDepth, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
     const vertices = geometry.attributes.position.array;
