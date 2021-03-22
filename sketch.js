@@ -22,7 +22,7 @@ let meshes = [];
 let matrix = new THREE.Matrix4();
 let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 artefact, 2 artefacts
 let assetsLoaded = 0;
-let music = new Audio('assets/underwatermusic.wav');
+//let music = new Audio('assets/underwatermusic.wav');
 
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
 const worldWidth = 560, worldDepth = 560;
@@ -438,7 +438,7 @@ function floorCollision() {
 
 function beginAV() {
     timeLeft = 0;
-    music.play();
+    //music.play();
     camera.position.x = 0;
     camera.position.z = 0;
     camera.position.y = 10+10*data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceDepth/(spaceBetweenPoints)];;
