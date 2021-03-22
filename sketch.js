@@ -458,7 +458,7 @@ function startAnim() {
         timeLeft += 0.01;
         //document.getElementById("container").style = "opacity: "+timeLeft;
         //document.getElementById("enterButton").style = "opacity: "+timeLeft;
-        //document.getElementById("enterButton").style = "top: "+((timeLeft*80)-40)+"%";
+        document.getElementById("enterButton").style = "top: "+((timeLeft*80)-40)+"%";
     }
 }
 
