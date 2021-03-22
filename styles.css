@@ -30,7 +30,7 @@ body {
 #container {
   z-index: 1;
   filter: grayscale(0%);
-  opacity: 0;
+  
 }
 
 #menuOpener {
