@@ -73,7 +73,7 @@ function init() {
         vertices[ j + 1 ] = data[ i ] * 10;
 
     }
-    console.log(geometry.attributes)
+    //console.log(geometry.attributes);
     hlight = new THREE.AmbientLight (0x404040,2);
     scene.add(hlight);
     directionalLight = new THREE.DirectionalLight(0x61d3ff,0.5);
