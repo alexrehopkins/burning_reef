@@ -9,7 +9,8 @@ let landmesh, texture;
 let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and ending
 let artefactX = 0;
 let artefactZ = 300;
-let artefact;
+let artefact = [];
+let currentArtefact = 0; //none currently in environment, 1 = artefact1, -99 means none left to find
 let artefactFound = [0,0,0,0,0,0,0,0];
 let newcoral = 0;
 let data;
@@ -30,7 +31,7 @@ const clock = new THREE.Clock();
 const respawnDistance = 200;
 let sky;
 
-//object array for loading coral, artefacts loaded as gltf, must go at end with artefact label
+//object array for loading coral, artefacts loaded as gltf, must go at end with artefact label //assetlocation,size,type,color (or color means which artefact)
 let loadingArray = [
     'assets/coral1.gltf',18,"scene",5,
     'assets/coral2.gltf',14,"scene",50,
@@ -41,7 +42,14 @@ let loadingArray = [
     'assets/fish2.gltf',12,"fish",65,
     'assets/seaweed1.gltf',20,"scene",90,
     'assets/kelp1.gltf',34,"scene",120,
-    'assets/coral1.gltf',10,"artefact1",10
+    'assets/artefacts/turtle.gltf',10,"artefact",0,
+    'assets/artefacts/sustainfish.gltf',10,"artefact",1,
+    'assets/artefacts/conch.gltf',10,"artefact",2,
+    'assets/artefacts/trash.gltf',10,"artefact",3,
+    'assets/artefacts/trash.gltf',10,"artefact",4, //conserve water
+    'assets/artefacts/pollutant.gltf',10,"artefact",5,
+    'assets/artefacts/acidification.gltf',10,"artefact",6,
+    'assets/artefacts/anchor.gltf',10,"artefact",7
 ];
 
 init();
@@ -70,7 +78,7 @@ function init() {
 
     for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
 
-        vertices[ j + 1 ] = data[ i ] * 10;
+        vertices[ j + 1 ] = data[ i ] * 10; //these are the y values
 
     }
     //console.log(geometry.attributes);
@@ -135,6 +143,7 @@ function init() {
     for (let i = 0; i < loadingArray.length; i+=4) {
         
         loadCoral(i/4,loadingArray[i],loadingArray[i+1],loadingArray[i+2],loadingArray[i+3]);
+            
     }
 }
 
@@ -170,7 +179,7 @@ function generateHeight( width, height ) {
 
             const x = i % width, y = ~ ~ ( i / width );
             data[ i ] += Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 1.75 );
-
+            
         }
 
         quality *= 5;
@@ -248,28 +257,26 @@ function generateTexture( data, width, height ) {
 
 function animate() {
     startAnim();
-    resetCounter++;
     requestAnimationFrame( animate );
-    if (resetCounter >= 50) { //run every 50 frames
-
-        for (let f = 0; f < newcoral; f++) {
-            for (let g = 0; g < numIndividualAssets; g++) {
-                handleCoral(f,g,20); //20 is a placeholder should have scaler here, but importing is weird
-            }
-        }
-        resetCounter = 0;
-        
-    }
-    sky.position.set(camera.position.x,camera.position.y+100,camera.position.z); //reset skybox to camera
-    directionalLight.position.set(camera.position.x,camera.position.y+1000,camera.position.z);
-    floorCollision();
     for (let f = 0; f < newcoral; f++) {
-        if (loadingArray[(f*4)+2] == 'fish') {
-            for (let g = 0; g < numIndividualAssets; g++) {
-                handleFish(f, g);
+        if (meshes[f]){
+            handleCoral(f,resetCounter,20);
+            if (loadingArray[(f*4)+2] == 'fish') {
+                for (let g = 0; g < numIndividualAssets; g++) {
+                    handleFish(f, g);
+                }
             }
         }   
     }
+    resetCounter++;
+    if (resetCounter >= numIndividualAssets) { //run every 50 frames
+        resetCounter = 0;    
+    }   
+    
+    sky.position.set(camera.position.x,camera.position.y+100,camera.position.z); //reset skybox to camera
+    directionalLight.position.set(camera.position.x,camera.position.y+1000,camera.position.z);
+    floorCollision();
+    
     render();
     
 
@@ -296,7 +303,7 @@ function render() {
     
     //timeline
     if (timeLeft < 100 && gameState > -1) {
-        timeLeft = timeLeft + 0.01; //every frame degrades
+        timeLeft = timeLeft + 0.002; //every frame degrades
         var elem = document.getElementById("myBar");
         handleArtefact();
         elem.style.width = (timeLeft) + "%";
@@ -304,13 +311,13 @@ function render() {
     }
 }
 
-function loadCoral(whichCoral, assetLocation,scaler,type,colorType) {
+function loadCoral(whichCoral, assetLocation,scaler,typeAsset,colorType) {
     const loader = new GLTFLoader();
     loader.load(assetLocation,function ( gltf ) {
-        if (type == "artefact1") {
-            artefact = gltf.scene;    
-            artefact.scale.set(scaler,scaler,scaler);
-            artefact.position.set(artefactX,610,artefactZ);
+        if (typeAsset == "artefact") {
+            artefact[colorType] = gltf.scene;
+            artefact[colorType].scale.set(scaler,scaler,scaler);
+            artefact[colorType].position.set(0,-1000,0);
             scene.add( gltf.scene );
         } 
         else {
@@ -331,11 +338,6 @@ function loadCoral(whichCoral, assetLocation,scaler,type,colorType) {
         },
         // called while loading is progressing
         function ( xhr ) {
-            if(xhr.loaded / xhr.total == 1){
-                assetsLoaded++;
-                if (assetsLoaded*4 == loadingArray.length){
-                }
-            }
            // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
         },
@@ -347,18 +349,58 @@ function loadCoral(whichCoral, assetLocation,scaler,type,colorType) {
 }
 
 function handleArtefact() {
-    if (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 30){
-        while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 100) {
-            artefactX = Math.floor(Math.random() * 200);
-            artefactZ = Math.floor(Math.random() * 200);
+    //start
+    console.log(camera.position);
+    //choose artefact to place and focus on if none is chosen
+    let find = Math.round(Math.random()*7); //random 0 to 7
+    while (currentArtefact == 0) {
+        if (artefactFound[find % artefactFound.length] == 0) {
+            currentArtefact = find+1;
+
+            //placement
+            artefactPlacer();
+            console.log(artefactX);
+            console.log(artefactZ);
+
         }
-        artefact.position.set(artefactX,800,artefactZ);
+        else {
+            find++;
+            if ( find > artefactFound.length*2 ) {
+                currentArtefact = -99;
+            }
+        }
+    }
+
+
+
+    //collision and placement
+    if ( Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 30 ){
+        
+        artefactPlacer();
+
         console.log("WELL DONE");
-        artefactFound[0] = 1;
+        artefactFound[currentArtefact-1] = 1;
+        console.log(artefactFound);
+        currentArtefact = 0;
+
+        //boost, remove at end?
         controls.autoForward = true;
         controls.movementSpeed = 500;
     }
 }
+
+function artefactPlacer() {
+    while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 500) {
+
+        artefactZ = Math.round(camera.position.z+(Math.random()-0.5)*500*2/spaceBetweenPoints)*spaceBetweenPoints;
+        artefactX = Math.round(camera.position.x+(Math.random()-0.5)*500*2/spaceBetweenPoints)*spaceBetweenPoints;
+    }
+    console.log(currentArtefact-1);
+    artefact[currentArtefact-1].position.x = artefactX;
+    artefact[currentArtefact-1].position.z = artefactZ;
+    artefact[currentArtefact-1].position.y = 20+(10*data[(artefactZ)/(spaceBetweenPoints)*worldWidth+artefactX/(spaceBetweenPoints)]); //20 above floor
+}
+
 
 function handleCoral(coralNum,i) {
     let coralPosX = camera.position.x;
