@@ -108,7 +108,7 @@ body {
 }
 
 #enterButton {
-  top: 40%;
+  top: -40%;
   width: 60%;
   left: 20%;
   z-index: 3!important;
@@ -129,12 +129,13 @@ body {
   border-radius: 100%;
   background-color: rgba(240, 248, 255, 0.514);
   color: #26a9ff;
-  bottom: 20px;
+  bottom: 60px;
   left: 20px;
   width: 100px;
   height: 100px;
   position: absolute;
   z-index: 5;
+  border: 10px inset white;
 }
 
 #pointer {

@@ -6,7 +6,7 @@ import { GLTFLoader } from './GLTFLoader.js';//'./node_modules/three/examples/js
 let container;
 let camera, controls, scene, renderer, hlight, directionalLight;
 let landmesh, texture;
-let timeLeft = 0; //percentage, 100 just started, 0 is entirely degraded and ending
+let timeLeft = 0; //percentage, 0 just started, 100 is entirely degraded and ending
 let artefactX = 0;
 let artefactZ = 300;
 let artefact = [];
@@ -25,6 +25,7 @@ let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 artefact
 let assetsLoaded = 0;
 let music = new Audio('assets/underwatermusic.wav');
 let artefactGlow = 0;
+let introAnim = 0;
 
 //also best left the same
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
@@ -265,6 +266,7 @@ function animate() {
     requestAnimationFrame( animate );
     for (let f = 0; f < newcoral; f++) {
         if (meshes[f]){
+            bleaching(f);
             handleCoral(f,resetCounter,20);
             if (loadingArray[(f*4)+2] == 'fish') {
                 for (let g = 0; g < numIndividualAssets; g++) {
@@ -313,7 +315,7 @@ function render() {
         var elem = document.getElementById("myBar");
         handleArtefact();
         elem.style.width = (timeLeft) + "%";
-        document.getElementById("container").style.filter = "grayscale("+timeLeft/100+")";
+        //document.getElementById("container").style.filter = "grayscale("+timeLeft/100+")";
     }
 }
 
@@ -404,10 +406,10 @@ function handleArtefact() {
 }
 
 function artefactPlacer() {
-    while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 500) {
+    while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 2000) {
 
-        artefactZ = Math.round((camera.position.z+(Math.random()-0.5)*500*2)/spaceBetweenPoints)*spaceBetweenPoints;
-        artefactX = Math.round((camera.position.x+(Math.random()-0.5)*500*2)/spaceBetweenPoints)*spaceBetweenPoints;
+        artefactZ = Math.round((camera.position.z+(Math.random()-0.5)*2000*2)/spaceBetweenPoints)*spaceBetweenPoints;
+        artefactX = Math.round((camera.position.x+(Math.random()-0.5)*2000*2)/spaceBetweenPoints)*spaceBetweenPoints;
     }
     artefact[currentArtefact-1].position.x = artefactX;
     artefact[currentArtefact-1].position.z = artefactZ;
@@ -426,6 +428,7 @@ function handleCoral(coralNum,i) {
     let positionHolder = new THREE.Vector3();
     positionHolder.setFromMatrixPosition(matrix );
     matrix.setPosition(positionHolder);
+    
     if (positionHolder.x == 0 && positionHolder.z == 0) {
         coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance; //random from -100 to 100
         coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
@@ -510,11 +513,13 @@ function beginAV() {
 }
 
 function startAnim() {
-    if (gameState == -2 && assetsLoaded*4 == loadingArray.length){
+    if (gameState == -2 && (artefact.length+meshes.length)*4 == loadingArray.length){
         gameState = -1;
+        console.log('loaded assets');
     }
     if (gameState == -1 && timeLeft < 1) {
         timeLeft += 0.01;
+        console.log(timeLeft);
         document.getElementById("enterButton").style = "opacity: "+timeLeft;
         document.getElementById("enterButton").style = "top: "+((timeLeft*80)-40)+"%";
     }
@@ -526,14 +531,22 @@ function compassPointer() {
     let vector = camera.getWorldDirection(new THREE.Vector3());
     let theta = THREE.Math.radToDeg(Math.atan2(vector.x,vector.z));
     let theta2 = THREE.Math.radToDeg(Math.atan2(camera.position.x-artefactX,camera.position.z-artefactZ));
-    compass.style = "transform: rotate("+theta+"deg)";
-    pointer.style = "transform: rotate("+-theta2+"deg)";
+    compass.style = "transform: rotateX("+(45+THREE.Math.radToDeg(vector.y))+"deg)";
+    pointer.style = "transform: rotate("+(-theta2+theta)+"deg)";
 }
 
 function ending() {
     console.log('END');
 }
 
+function bleaching(coralN) {
+    meshes[coralN].traverse((o) => {
+        if (o.isMesh) {
+            let col = Math.round(timeLeft/2);
+            o.material.color = new THREE.Color("hsl("+loadingArray[(4*coralN)+3]+", "+(100-(col*2))+"%, "+(50+col)+"%)");
+        }
+    });
+}
 
 document.getElementById('enterButton').addEventListener("click", function() {beginAV()}, false);
 
