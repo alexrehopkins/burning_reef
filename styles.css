@@ -124,3 +124,27 @@ body {
 #enterButton:hover,#menuOpener:hover{
   background-color:rgba(0, 47, 85, 0.8);
 }
+
+#compass {
+  border-radius: 100%;
+  background-color: rgba(240, 248, 255, 0.514);
+  color: #26a9ff;
+  bottom: 20px;
+  left: 20px;
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  z-index: 5;
+}
+
+#pointer {
+  content:url("assets/pointer.png");
+  position: absolute;
+  height: 100%;
+  width: 40%;
+  bottom: 0%;
+  left: 30%;
+  border-radius: 100%;
+  z-index: 6;
+  transform: rotate(0deg);
+}
