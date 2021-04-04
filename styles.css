@@ -30,11 +30,11 @@ body {
 #container {
   z-index: 1;
   filter: grayscale(0%);
-  
+  opacity: 0;
 }
 
 #menuOpener {
-  bottom: 1%;
+  bottom: 3%;
   position: absolute;
   z-index: 2;
   right: 1%;
@@ -44,6 +44,7 @@ body {
   font-family: 'Lato', sans-serif;
   text-shadow: 2px 2px 10px #000000;
   border: 3px solid rgb(255, 255, 255);
+  display: none;
 }
 
 #menu {
@@ -59,22 +60,17 @@ body {
   text-shadow: 2px 2px 10px #000000;
   font-family: 'Lato', sans-serif;
   position: absolute;
-  z-index: 4;
+  z-index: 7;
   display: none;
 }
 
-#imgurl {
-  width:150px; 
+.menuIcon {
+  width: 10%;
+
 }
 
-#menuPrev:hover {
-  width:160px;
-  
-}
-
-#menuNext:hover {
-  width:160px;
-  
+.menuIcon:hover {
+  box-shadow: 0px 0px 10px white;
 }
 
 #startButton {
@@ -136,6 +132,7 @@ body {
   position: absolute;
   z-index: 5;
   border: 10px inset white;
+  display: none;
 }
 
 #pointer {
@@ -148,4 +145,23 @@ body {
   border-radius: 100%;
   z-index: 6;
   transform: rotate(0deg);
+}
+
+#ending {
+  display: none;
+  z-index: 5;
+}
+
+#returnButton {
+  bottom: 3%;
+  position: absolute;
+  z-index: 2;
+  right: 1%;
+  background-color: rgba(0, 47, 85, 0.5);
+  color: rgb(255, 255, 255);
+  font-size: 4vh;
+  font-family: 'Lato', sans-serif;
+  text-shadow: 2px 2px 10px #000000;
+  border: 3px solid rgb(255, 255, 255);
+  display: none;
 }

@@ -11,7 +11,7 @@ let artefactX = 0;
 let artefactZ = 300;
 let artefact = [];
 let currentArtefact = 0; //none currently in environment, 1 = artefact1, -99 means none left to find
-let artefactFound = [0,0,0,0,0,0,0,0];
+let artefactFound = [0,0,0,0,0,0,0];
 let newcoral = 0;
 let data;
 let sky;
@@ -22,10 +22,8 @@ let spaceBetweenPoints;
 let meshes = [];
 let matrix = new THREE.Matrix4();
 let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 artefact, 2 artefacts
-let assetsLoaded = 0;
 let music = new Audio('assets/underwatermusic.wav');
 let artefactGlow = 0;
-let introAnim = 0;
 
 //also best left the same
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
@@ -53,10 +51,9 @@ let loadingArray = [
     'assets/artefacts/sustainfish.gltf',20,"artefact",1,
     'assets/artefacts/conch.gltf',20,"artefact",2,
     'assets/artefacts/trash.gltf',40,"artefact",3,
-    'assets/artefacts/trash.gltf',10,"artefact",4, //conserve water
-    'assets/artefacts/pollutant.gltf',20,"artefact",5,
-    'assets/artefacts/acidification.gltf',10,"artefact",6,
-    'assets/artefacts/anchor.gltf',30,"artefact",7
+    'assets/artefacts/pollutant.gltf',20,"artefact",4,
+    'assets/artefacts/acidification.gltf',10,"artefact",5,
+    'assets/artefacts/anchor.gltf',30,"artefact",6
 ];
 
 init();
@@ -291,7 +288,6 @@ function animate() {
 }
 
 function render() {
-    compassPointer();
     if (controls.movementSpeed > respawnDistance/2) {
         camera.fov = ((controls.movementSpeed-(respawnDistance/2))/16)+(respawnDistance/4);
         camera.updateProjectionMatrix();
@@ -311,6 +307,7 @@ function render() {
     
     //timeline
     if (timeLeft < 100 && gameState > -1) {
+        compassPointer();
         timeLeft = timeLeft + 0.01; //every frame degrades
         var elem = document.getElementById("myBar");
         handleArtefact();
@@ -467,19 +464,22 @@ function handleFish(coralNum, i) {
     meshes[coralNum].getMatrixAt(i,matrix);
     matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
     let scaler = loadingArray[coralNum*4+1];
-
-    let fishPosX = Math.round((halfOfDistanceWidth+dummy.position.x)/spaceBetweenPoints)*spaceBetweenPoints;
-    let fishPosZ = Math.round((halfOfDistanceDepth+dummy.position.z)/spaceBetweenPoints)*spaceBetweenPoints;
-    
-    let fishPosY = 10*data[(fishPosZ)/(spaceBetweenPoints)*worldWidth+fishPosX/(spaceBetweenPoints)];
-    fishPosY = dummy.position.y-(fishPosY+70);
-    dummy.position.set(dummy.position.x,dummy.position.y,dummy.position.z);
-    if (fishPosY < 0) {
-        dummy.position.y += - fishPosY*0.04;   
-    } else {
-        dummy.position.y -= (Math.random()*0.4);
+    if (timeLeft/100 > i/numIndividualAssets) {
+        scaler = 0;
+    } else{
+        let fishPosX = Math.round((halfOfDistanceWidth+dummy.position.x)/spaceBetweenPoints)*spaceBetweenPoints;
+        let fishPosZ = Math.round((halfOfDistanceDepth+dummy.position.z)/spaceBetweenPoints)*spaceBetweenPoints;
+        
+        let fishPosY = 10*data[(fishPosZ)/(spaceBetweenPoints)*worldWidth+fishPosX/(spaceBetweenPoints)];
+        fishPosY = dummy.position.y-(fishPosY+70);
+        dummy.position.set(dummy.position.x,dummy.position.y,dummy.position.z);
+        if (fishPosY < 0) {
+            dummy.position.y += - fishPosY*0.04;   
+        } else {
+            dummy.position.y -= (Math.random()*0.4);
+        }
+        dummy.rotation.y += ((Math.random()*0.07)-(Math.random()*0.07));
     }
-    dummy.rotation.y += ((Math.random()*0.07)-(Math.random()*0.07));
     dummy.scale.set(scaler,scaler,scaler);
     dummy.translateZ(2);
     dummy.updateMatrix();
@@ -492,8 +492,10 @@ function floorCollision() {
     let floorY = 10*data[(cameraZ)/(spaceBetweenPoints)*worldWidth+cameraX/(spaceBetweenPoints)];
     floorY = camera.position.y-(floorY+70);
     if (floorY < 0) {
-        camera.position.y += - floorY*0.04;
-        
+        camera.position.y += - floorY*0.04;   
+    }
+    if (floorY > 500) { //if difference between floor and cam is greater than 500 then alter by a portion of the difference
+        camera.position.y += - (floorY-500)*0.04;   
     }
 }
 
@@ -510,29 +512,27 @@ function beginAV() {
     document.getElementById("enterButton").style = "display: none;";
     document.getElementById("info").style = "display: none;";
     document.getElementById("myBar").style = "display: block;";
+    document.getElementById("menuOpener").style = "display: block;";
 }
 
 function startAnim() {
     if (gameState == -2 && (artefact.length+meshes.length)*4 == loadingArray.length){
         gameState = -1;
-        console.log('loaded assets');
     }
     if (gameState == -1 && timeLeft < 1) {
         timeLeft += 0.01;
-        console.log(timeLeft);
         document.getElementById("enterButton").style = "opacity: "+timeLeft;
+        document.getElementById("container").style = "opacity: "+timeLeft;
         document.getElementById("enterButton").style = "top: "+((timeLeft*80)-40)+"%";
     }
 }
 
 function compassPointer() {
-    let pointer = document.getElementById('pointer');
-    let compass = document.getElementById('compass');
     let vector = camera.getWorldDirection(new THREE.Vector3());
     let theta = THREE.Math.radToDeg(Math.atan2(vector.x,vector.z));
     let theta2 = THREE.Math.radToDeg(Math.atan2(camera.position.x-artefactX,camera.position.z-artefactZ));
-    compass.style = "transform: rotateX("+(45+THREE.Math.radToDeg(vector.y))+"deg)";
-    pointer.style = "transform: rotate("+(-theta2+theta)+"deg)";
+    document.getElementById('compass').style = "transform: rotateX("+(45+THREE.Math.radToDeg(vector.y))+"deg); display: block;";
+    document.getElementById('pointer').style = "transform: rotate("+(-theta2+theta)+"deg)";
 }
 
 function ending() {
