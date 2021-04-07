@@ -21,8 +21,9 @@ let resetCounter = 0;
 let spaceBetweenPoints;
 let meshes = [];
 let matrix = new THREE.Matrix4();
-let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 artefact, 2 artefacts
-let music = new Audio('assets/underwatermusic.wav');
+let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 ending screen
+let music = new Audio('assets/underwatermusic.mp3');
+let tune = new Audio('assets/artefact.mp3');
 let artefactGlow = 0;
 
 //also best left the same
@@ -305,8 +306,13 @@ function render() {
     music.playbackRate = 1+(0.4-(timeLeft/100));
     renderer.render( scene, camera );
     
+    if (currentArtefact == -99) {
+        gameState = 1;
+        ending();
+    }
+
     //timeline
-    if (timeLeft < 100 && gameState > -1) {
+    if (timeLeft < 100 && gameState == 0) {
         compassPointer();
         timeLeft = timeLeft + 0.01; //every frame degrades
         var elem = document.getElementById("myBar");
@@ -356,24 +362,20 @@ function handleArtefact() {
     //start
     
     //choose artefact to place and focus on if none is chosen
-    let find = Math.round(Math.random()*7); //random 0 to 7
+    let find = Math.round(Math.random()*artefactFound.length); //random 0 to NUMBER OF ARTEFACTS
     while (currentArtefact == 0) {
         if (artefactFound[find % artefactFound.length] == 0) {
             currentArtefact = ((find) % artefactFound.length)+1;
             
             //placement
-            console.log(currentArtefact-1);
             artefactPlacer();
-            
-            console.log(artefactX);
-            console.log(artefactZ);
-            console.log(artefact[currentArtefact-1].position.y);
 
         }
         else {
             find++;
             if ( find > artefactFound.length*2 ) {
                 currentArtefact = -99;
+                gameState = 1;
             }
         }
     }
@@ -388,13 +390,17 @@ function handleArtefact() {
             o.material.emissive = new THREE.Color("hsl(0, 0%, "+Math.abs(artefactGlow)+"%)");
         }
       });
-
-    
     //collision and placement
-    if ( Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 70 ){
+    let multiplier = 1;
+    if (currentArtefact == 4) {
+        multiplier = 3;
+    }
+    if ( Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 70*multiplier ){
         artefact[currentArtefact-1].position.y = -1000;
         artefactFound[currentArtefact-1] = 1;
         currentArtefact = 0;
+        artefactNotification();
+        music.pause;
 
         //boost, remove at end?
         //controls.autoForward = true;
@@ -537,6 +543,13 @@ function compassPointer() {
 
 function ending() {
     console.log('END');
+    document.getElementById("menu").style = "display: block;";
+    document.getElementById("menuOpener").innerHTML = "RETURN";
+    document.getElementById("container").style = "opacity: 0";
+}
+
+function artefactNotification() {
+    document.getElementById("collection").style.animation = "notification 5s linear";
 }
 
 function bleaching(coralN) {

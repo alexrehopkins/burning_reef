@@ -15,7 +15,7 @@ let descriptions = [
 
 
 
-let imgurls = ["assets/iconNotFound.jpg","assets/icon1.jpg","assets/icon2.jpg","assets/icon3.jpg","assets/icon4.jpg","assets/icon5.jpg","assets/icon6.jpg","assets/icon7.jpg","assets/icon8.jpg"];
+let imgurls = ["assets/iconNotFound.jpg","assets/artefacts/a1.png","assets/artefacts/a2.png","assets/artefacts/a3.png","assets/artefacts/a4.png","assets/artefacts/a5.png","assets/artefacts/a6.png","assets/artefacts/a7.png"];
 let artefactLength = artefactFound.artefactFound.length;
 
 
@@ -37,12 +37,14 @@ function updatePage(pageIncrement) {
     
     for (let i = 1; i <= artefactLength; i++) {
         document.getElementById("art"+i).style.width = "";
+        document.getElementById("art"+i).style.filter = "sepia(100%)";
         if (artefactFound.artefactFound[i-1] == 1) {
-            document.getElementById("art"+i).src = imgurls[i];
+            //document.getElementById("art"+i).src = imgurls[i];
+            document.getElementById("art"+i).style.filter = "sepia(0%)";
         }
     }
 
-    document.getElementById("art"+pageIncrement).style.width = "20%";
+    document.getElementById("art"+pageIncrement).style.width = "22%";
     if (artefactFound.artefactFound[pageIncrement-1] == 0) {
         document.getElementById("title").innerHTML = titles[0];
         document.getElementById("description").innerHTML = descriptions[0];
