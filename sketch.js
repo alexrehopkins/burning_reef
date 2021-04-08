@@ -1,6 +1,5 @@
 import * as THREE from './three.module.js';//'./node_modules/three/build/three.module.js';
 import { FirstPersonControls } from './FirstPersonControls.js';//'./node_modules/three/examples/jsm/controls/FirstPersonControls.js';
-import { DeviceOrientationControls } from './DeviceOrientationControls.js';//'./node_modules/three/examples/jsm/controls/FirstPersonControls.js';
 import { ImprovedNoise } from './ImprovedNoise.js';//'./node_modules/three/examples/jsm/math/ImprovedNoise.js';
 import { GLTFLoader } from './GLTFLoader.js';//'./node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -27,7 +26,6 @@ let music = new Audio('assets/underwatermusic.mp3');
 let tune = new Audio('assets/artefact.mp3');
 let artefactGlow = 0;
 let bobMultiplier = 1; // artefact bobbing tracker 1 means bobbing up, -1 bobbing down
-let mobcontrols;
 
 //also best left the same
 const worldDirectWidth = 56000, worldDirectDepth = 56000;
@@ -155,7 +153,8 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
     
-    mobcontrols = new DeviceOrientationControls(camera );
+    
+    //mobcontrols = new DeviceOrientationControls(camera );
 
     controls = new FirstPersonControls( camera, renderer.domElement );
     

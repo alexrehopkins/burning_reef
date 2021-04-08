@@ -115,6 +115,33 @@ var FirstPersonControls = function ( object, domElement ) {
 
 	};
 
+	this.onTouchStart = function ( event ) {
+		this.moveForward = true;
+		event.preventDefault();
+		/*
+		if ( this.domElement !== document ) {
+
+			this.domElement.focus();
+
+		}
+
+		
+		event.stopPropagation();
+
+		if ( this.activeLook ) {
+
+			switch ( event.button ) {
+
+				case 0: this.moveForward = true; break;
+				case 2: this.moveBackward = true; break;
+
+			}
+
+		}
+		*/
+	};
+
+
 	this.onMouseUp = function ( event ) {
 
 		event.preventDefault();
@@ -135,6 +162,32 @@ var FirstPersonControls = function ( object, domElement ) {
 
 	};
 
+	this.onTouchEnd = function ( event ) {
+
+		this.moveForward = false;
+		
+		event.preventDefault();
+
+		this.mouseX = 0;
+		this.mouseY = 0;
+		/*
+		event.stopPropagation();
+
+		if ( this.activeLook ) {
+
+			switch ( event.button ) {
+
+				case 0: this.moveForward = false; break;
+				case 2: this.moveBackward = false; break;
+
+			}
+
+		}
+
+		this.mouseDragOn = false;
+		*/
+	};
+
 	this.onMouseMove = function ( event ) {
 
 		if ( this.domElement === document ) {
@@ -149,6 +202,22 @@ var FirstPersonControls = function ( object, domElement ) {
 
 		}
 
+	};
+
+	this.onTouchMove = function ( event ) {
+		
+		if ( this.domElement === document ) {
+
+			this.mouseX = event.targetTouches[0].pageX - this.viewHalfX;
+			this.mouseY = event.targetTouches[0].pageY - this.viewHalfY;
+
+		} else {
+
+			this.mouseX = event.targetTouches[0].pageX - this.domElement.offsetLeft - this.viewHalfX;
+			this.mouseY = event.targetTouches[0].pageY - this.domElement.offsetTop - this.viewHalfY;
+
+		}
+		
 	};
 
 	this.onKeyDown = function ( event ) {
@@ -314,6 +383,17 @@ var FirstPersonControls = function ( object, domElement ) {
 	var _onMouseUp = bind( this, this.onMouseUp );
 	var _onKeyDown = bind( this, this.onKeyDown );
 	var _onKeyUp = bind( this, this.onKeyUp );
+
+	//mobile
+	var _onTouchStart = bind( this, this.onTouchStart );
+	var _onTouchMove = bind( this, this.onTouchMove );
+	var _onTouchEnd = bind( this, this.onTouchEnd );
+
+	this.domElement.addEventListener( 'touchstart', _onTouchStart );
+	this.domElement.addEventListener( 'touchmove', _onTouchMove );
+	this.domElement.addEventListener( 'touchend', _onTouchEnd );
+
+
 
 	this.domElement.addEventListener( 'contextmenu', contextmenu );
 	this.domElement.addEventListener( 'mousemove', _onMouseMove );
