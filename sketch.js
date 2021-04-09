@@ -11,7 +11,7 @@ let artefactX = 0;
 let artefactZ = 300;
 let artefact = [];
 let currentArtefact = 0; //none currently in environment, 1 = artefact1, -99 means none left to find
-let artefactFound = [1,1,1,1,1,1,0]//[0,0,0,0,0,0,0];
+let artefactFound = [0,0,0,0,0,0,0]//[0,0,0,0,0,0,0];
 let newcoral = 0;
 let data;
 let sky;
@@ -340,7 +340,7 @@ function render() {
     renderer.render( scene, camera );
     
     if (currentArtefact == -99 && gameState < 2) {
-        ending(1);
+        ending();
     }
     //timeline
     if (timeLeft < 100 && gameState == 0 && shown < 0) {
@@ -356,7 +356,7 @@ function render() {
         elem.style.width = (timeLeft) + "%";
         //document.getElementById("container").style.filter = "grayscale("+timeLeft/100+")";
     } else if (timeLeft >= 100 && gameState < 2) {
-        ending(0);
+        ending();
     }
 }
 
@@ -585,7 +585,7 @@ function startAnim() {
         document.getElementById("container").classList.add("introd");
         
     }
-    if (gameState == -1 && timeLeft < 1) {
+    if (gameState == -1 && timeLeft < 10) {
         timeLeft += 0.01;
         //document.getElementById("enterButton").style = "opacity: "+timeLeft;
         //document.getElementById("container").style = "opacity: "+timeLeft;
@@ -602,11 +602,10 @@ function compassPointer() {
     document.getElementById('pointer').style = "transform: rotate("+(-theta2+theta)+"deg)";
 }
 
-function ending(win) {
+function ending() {
     gameState = 2;
     controls.movementSpeed = 0;
     controls.lookSpeed = 0;
-    updatePage(1);
     //get total
     let total = 0;
     for (let i = 0; i < artefactFound.length; i++) {
@@ -614,19 +613,11 @@ function ending(win) {
             total++
         }
     }
-    document.getElementById("menu").style = "display: block;";
-    shown = 1;
-    if (win == 1) {
-        document.getElementById("info").innerHTML = "Well done! You managed to collect all the artefacts before the ocean degraded!";
-    }
-    else if (win == 0) {
-        document.getElementById("info").innerHTML = "You ran out of time. The ocean is beyond repair, but you did managed to collect "+total+" out of "+artefactFound.length+" of the artefacts!";
-    }
-    document.getElementById("info").style = "display: block;";
     document.getElementById("myBar").style = "display: none;";
     document.getElementById("compass").style = "display: none;";
-    document.getElementById("menuOpener").innerHTML = "RETURN";
-    document.getElementById("container").style = "opacity: 0";
+    document.getElementById("menuOpener").style.bottom = "50%";
+    document.getElementById("menuOpener").style.right = "45%";
+    document.getElementById("menuOpener").innerHTML = "RESULTS";
 }
 
 function artefactNotification(source) {
@@ -645,6 +636,20 @@ function bleaching(coralN) {
     });
 }
 
+function endingScreen() {
+    gameState = 3;
+    document.getElementById("info").style = "display: block;";
+    if (timeLeft < 100) {
+        document.getElementById("info").innerHTML = "Well done! You managed to collect all the artefacts before the ocean degraded!";
+        document.getElementById("menuOpener").innerHTML = "RETURN";
+    }
+    else {
+        document.getElementById("info").innerHTML = "You ran out of time. The reef is beyond repair, but you did managed to collect "+total+" out of "+artefactFound.length+" of the artefacts!";
+        document.getElementById("menuOpener").innerHTML = "RETRY";
+    }
+    document.getElementById("menu").style = "display: block;";
+    shown = 1;
+}
 
 function openMenu() {
     if (shown < 0) {
@@ -658,16 +663,22 @@ function openMenu() {
         shown = shown*-1;
     }
 
-    if (gameState > 1) {
+    if (gameState == 3) {
         location.reload();
+    }
+    if (gameState == 2) {
+        document.getElementById("menu").style = "display: block;";
+        document.getElementById("menuOpener").style.bottom = "";
+        document.getElementById("menuOpener").style.right = "";
+        endingScreen();
     }
 }
 
 function updatePage(pageIncrement) {
     
     for (let i = 1; i <= artefactFound.length; i++) {
-        //document.getElementById("art"+i).style.width = "";
-        //document.getElementById("art"+i).style.height = "";
+        document.getElementById("art"+i).style.width = "";
+        document.getElementById("art"+i).style.height = "";
         document.getElementById("art"+i).style.filter = "sepia(100%)";
         if (artefactFound[i-1] == 1) {
             document.getElementById("art"+i).src = imgurls[i];
@@ -675,8 +686,8 @@ function updatePage(pageIncrement) {
         }
     }
 
-    //document.getElementById("art"+pageIncrement).style.width = "15vw";
-    //document.getElementById("art"+pageIncrement).style.height = "15vw";
+    document.getElementById("art"+pageIncrement).style.width = "16vw";
+    document.getElementById("art"+pageIncrement).style.height = "16vw";
     if (artefactFound[pageIncrement-1] == 0) {
         document.getElementById("title").innerHTML = titles[0];
         document.getElementById("description").innerHTML = descriptions[0];
