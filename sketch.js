@@ -343,11 +343,30 @@ function render() {
         ending();
     }
     //timeline
+    if (timeLeft > 1 && timeLeft < 1.2) {
+        document.getElementById("info").style = "display: block";
+        document.getElementById("info").innerHTML = "Use the compass in the bottom left to hunt down the nearest artefact! <br> You should be able to see them flashing!"
+    }
+
+    if (timeLeft > 5 && timeLeft < 5.2) {
+        document.getElementById("info").style = "display: none";
+    }
+
+    if (timeLeft > 46 && timeLeft < 46.2) {
+        document.getElementById("info").style = "display: block";
+        document.getElementById("info").innerHTML = "Look at the timeline at the bottom! <br> The ocean is already half degraded!"
+    }
+
+    if (timeLeft > 50 && timeLeft < 50.2) {
+        document.getElementById("info").style = "display: none";
+    }
+
+
     if (timeLeft < 100 && gameState == 0 && shown < 0) {
         compassPointer();
         for (let i = 0; i < artefactFound.length; i++) {
             if (artefactFound[i] == 1) {
-                timeLeft = timeLeft + 0.002; //every frame degrades
+                timeLeft = timeLeft + 0.001; //every frame degrades
             }
         }
         timeLeft = timeLeft + 0.001; //every frame degrades
@@ -586,7 +605,7 @@ function startAnim() {
         
     }
     if (gameState == -1 && timeLeft < 10) {
-        timeLeft += 0.01;
+        //timeLeft += 0.01;
         //document.getElementById("enterButton").style = "opacity: "+timeLeft;
         //document.getElementById("container").style = "opacity: "+timeLeft;
         //document.getElementById("enterButton").style = "top: "+((timeLeft*80)-40)+"%";
