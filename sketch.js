@@ -366,7 +366,7 @@ function render() {
         compassPointer();
         for (let i = 0; i < artefactFound.length; i++) {
             if (artefactFound[i] == 1) {
-                timeLeft = timeLeft + 0.001; //every frame degrades
+                timeLeft = timeLeft + 0.0015; //every frame degrades
             }
         }
         timeLeft = timeLeft + 0.001; //every frame degrades
