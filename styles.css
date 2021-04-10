@@ -123,7 +123,7 @@ body {
   width: 60%;
   left: 20%;
   z-index: 4!important;
-  font-size: 30px;
+  font-size: 35px;
   font-family: 'Verdana', sans-serif;
   position: absolute;
   color: rgb(255, 255, 255);
@@ -131,6 +131,8 @@ body {
   border: 3px solid rgb(255, 255, 255);
   text-shadow: 2px 2px 10px #000000;
   border-radius: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   cursor: pointer;
   opacity: 0;
 }
