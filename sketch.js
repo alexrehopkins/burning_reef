@@ -23,7 +23,7 @@ let meshes = [];
 let matrix = new THREE.Matrix4();
 let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 ending screen opening, 2 congratulations, 3 opened, 4 return to main menu
 let music = new Audio('assets/underwatermusic.mp3');
-let tune = new Audio('assets/artefact.mp3');
+let tune = new Audio('assets/artefact.mp3'); //sound effect for artefact
 let artefactGlow = 0;
 let bobMultiplier = 1; // artefact bobbing tracker 1 means bobbing up, -1 bobbing down
 
@@ -92,11 +92,11 @@ function init() {
     spaceBetweenPoints = (worldDirectWidth/worldWidth+worldDirectDepth/worldDepth)/2;
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x0099ff );
-    scene.fog = new THREE.FogExp2( 0x26a9ff, 0.001 ); //0.001 for fog
+    scene.fog = new THREE.FogExp2( 0x26a9ff, 0.001 ); //0.001 for fog density
 
-    data = generateHeight( worldWidth, worldDepth );
+    data = generateHeight( worldWidth, worldDepth ); //function for generating height data.
 
-    camera.position.set( 0, 710, 0 );
+    camera.position.set( 0, 710, 0 ); //initial camera position
     camera.lookAt( 0, 300, 150 );
     const geometry = new THREE.PlaneBufferGeometry( worldDirectWidth, worldDirectDepth, worldWidth - 1, worldDepth - 1 );
     geometry.rotateX( - Math.PI / 2 );
@@ -107,6 +107,7 @@ function init() {
         vertices[ j + 1 ] = data[ i ] * 10; //these are the y values
 
     }
+    //lighting
     hlight = new THREE.AmbientLight (0x404040,2);
     scene.add(hlight);
     directionalLight = new THREE.DirectionalLight(0x61d3ff,0.5);
@@ -140,24 +141,21 @@ function init() {
 
     //end of skybox
 
-
+    //terrain mesh/texture
     texture = new THREE.CanvasTexture( generateTexture( data, worldWidth, worldDepth ) );
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
-
     landmesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { map: texture } ) );
     scene.add( landmesh );
 
-    renderer = new THREE.WebGLRenderer({antialias: true}); // alpha: true
+    //renderer
+    renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
     
-    
-    //mobcontrols = new DeviceOrientationControls(camera );
-
+    //controls
     controls = new FirstPersonControls( camera, renderer.domElement );
-    
     controls.movementSpeed = respawnDistance/2;
     controls.lookSpeed = 0.07;
     controls.verticalMax = 3*Math.PI/4;
@@ -170,119 +168,86 @@ function init() {
 
     //coral import
     for (let i = 0; i < loadingArray.length; i+=4) {
-        
         loadCoral(i/4,loadingArray[i],loadingArray[i+1],loadingArray[i+2],loadingArray[i+3]);
-            
     }
 }
 
 function onWindowResize() {
-
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-
     renderer.setSize( window.innerWidth, window.innerHeight );
-
     controls.handleResize();
-
 }
 
 function generateHeight( width, height ) {
-
     let seed = Math.PI / 4;
     window.Math.random = function () {
-
         const x = Math.sin( seed ++ ) * 10000;
         return x - Math.floor( x );
-
     };
 
     const size = width * height, data = new Uint8Array( size );
     const perlin = new ImprovedNoise(), z = Math.random() * 100;
-
     let quality = 1;
-
     for ( let j = 0; j < 4; j ++ ) {
-
         for ( let i = 0; i < size; i ++ ) {
-
             const x = i % width, y = ~ ~ ( i / width );
             data[ i ] += Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 1.75 );
-            
         }
-
         quality *= 5;
-
     }
     return data;
-
 }
 
 function generateTexture( data, width, height ) {
-
     let context, image, imageData, shade;
 
     const vector3 = new THREE.Vector3( 0, 0, 0 );
-
     const sun = new THREE.Vector3( 1, 900, 1 );
     sun.normalize();
 
     const canvas = document.createElement( 'canvas' );
     canvas.width = width;
     canvas.height = height;
-
     context = canvas.getContext( '2d' );
     context.fillStyle = '#000';
     context.fillRect( 0, 0, width, height );
-
     image = context.getImageData( 0, 0, canvas.width, canvas.height );
     imageData = image.data;
 
     for ( let i = 0, j = 0, l = imageData.length; i < l; i += 4, j ++ ) {
-
         vector3.x = data[ j - 2 ] - data[ j + 2 ];
         vector3.y = 2;
         vector3.z = data[ j - width * 2 ] - data[ j + width * 2 ];
         vector3.normalize();
-
         shade = vector3.dot( sun );
 
+        //colour of terrain texture
         imageData[ i ] = ( 96 + shade * 64 ) * ( 0.5 + data[ j ] * 0.07 );
         imageData[ i + 1 ] = ( 96 + shade * 48 ) * ( 0.5 + data[ j ] * 0.07 );
         imageData[ i + 2 ] = ( 16 +  shade * 48 ) * ( 0.5 + data[ j ] * 0.07 );
-
     }
-
     context.putImageData( image, 0, 0 );
 
-    // Scaled 4x
-
+    // Scale to size of mesh (4x)
     const canvasScaled = document.createElement( 'canvas' );
     canvasScaled.width = width;
     canvasScaled.height = height;
-
     context = canvasScaled.getContext( '2d' );
     context.scale( 4, 4 );
     context.drawImage( canvas, 0, 0 );
-
     image = context.getImageData( 0, 0, canvasScaled.width, canvasScaled.height );
     imageData = image.data;
 
     for ( let i = 0, l = imageData.length; i < l; i += 4 ) {
-
         const v = ~ ~ ( Math.random() * 5 );
-
         imageData[ i ] += v;
         imageData[ i + 1 ] += v;
         imageData[ i + 2 ] += v;
-
     }
     context.putImageData( image, 0, 0 );
     return canvasScaled;
-
 }
-
-//
 
 function animate() {
     startAnim();
@@ -298,29 +263,26 @@ function animate() {
             }
         }   
     }
+    //counter that updates coral assets, cycles through an asset in the array every frame to avoid updating all at once
     resetCounter++;
     if (resetCounter >= numIndividualAssets) {
         resetCounter = 0;    
     }   
-    
-    sky.position.set(camera.position.x,camera.position.y+100,camera.position.z); //reset skybox to camera
-    directionalLight.position.set(camera.position.x,camera.position.y+1000,camera.position.z);
+    sky.position.set(camera.position.x,camera.position.y+100,camera.position.z); //reset skybox to camera to ensure user doesnt go out of skybox bounds
+    directionalLight.position.set(camera.position.x,camera.position.y+1000,camera.position.z); //reset lighting to camera
     floorCollision();
-    
     render();
-    
-
-
 }
 
 function render() {
+    //freeze camera if menu is open, otherwise continue
     if (shown > 0){
         controls.movementSpeed = 0;
         controls.lookSpeed = 0;
     }
-    else if (controls.movementSpeed > respawnDistance/2) {
+    else if (controls.movementSpeed > respawnDistance/2) { //if movement speed is bigger than normal, then slow user down till normal
         camera.fov = ((controls.movementSpeed-(respawnDistance/2))/16)+(respawnDistance/4);
-        camera.updateProjectionMatrix();
+        camera.updateProjectionMatrix(); //update camera
         controls.movementSpeed--;
         controls.lookSpeed = 0.07;
     }
@@ -328,8 +290,8 @@ function render() {
         controls.autoForward = false;
         controls.movementSpeed = respawnDistance/2;
         controls.lookSpeed = 0.07;
-    }//boost mechanic
-
+    }
+    //if mesh is loaded update matrix
     for (let i = 0; i<newcoral;i++){
         if (meshes[i]) {
             meshes[i].instanceMatrix.needsUpdate = true;
@@ -342,7 +304,7 @@ function render() {
     if (currentArtefact == -99 && gameState < 2) {
         ending();
     }
-    //timeline
+    //timeline hint prompts
     if (timeLeft > 1 && timeLeft < 1.2) {
         document.getElementById("info").style = "display: block";
         document.getElementById("info").innerHTML = "Use the compass in the bottom left to hunt down the nearest artefact! <br> You should be able to see them flashing!"
@@ -360,18 +322,16 @@ function render() {
     if (timeLeft > 50 && timeLeft < 50.2) {
         document.getElementById("info").style = "display: none";
     }
-
-
     if (timeLeft < 100 && gameState == 0 && shown < 0) {
-        compassPointer();
+        compassPointer(); //update compass during experience
         for (let i = 0; i < artefactFound.length; i++) {
             if (artefactFound[i] == 1) {
-                timeLeft = timeLeft + 0.0015; //every frame degrades
+                timeLeft = timeLeft + 0.0015; //every frame degrades, degrades more for each artefact found.
             }
         }
         timeLeft = timeLeft + 0.001; //every frame degrades
         var elem = document.getElementById("myBar");
-        handleArtefact();
+        handleArtefact(); //artefact position handler
         elem.style.width = (timeLeft) + "%";
         //document.getElementById("container").style.filter = "grayscale("+timeLeft/100+")";
     } else if (timeLeft >= 100 && gameState < 2) {
@@ -380,23 +340,30 @@ function render() {
 }
 
 function loadCoral(whichCoral, assetLocation,scaler,typeAsset,colorType) {
-    const loader = new GLTFLoader();
+    const loader = new GLTFLoader(); //load gltf 3d model
     loader.load(assetLocation,function ( gltf ) {
         if (typeAsset == "artefact") {
+            //if artefact load directly as gltf model
             artefact[colorType] = gltf.scene;
             artefact[colorType].scale.set(scaler,scaler,scaler);
             artefact[colorType].position.set(0,-1000,0);
             scene.add( gltf.scene );
-        } 
+        }
         else {
+            //otherwise assume instanced mesh
             gltf.scene.traverse( function(child) {
+                //detect if the mesh from the gltf file
                 if (child.isMesh) {
+                    //apply the colour specified in the load, with maximum saturation so the gradual change to a bleached state is more clear.
                     let color6 = new THREE.Color("hsl("+colorType+", 100%, 50%)");
+                    
+                    //create the instanced mesh
                     meshes[whichCoral] = (new THREE.InstancedMesh( child.geometry, new THREE.MeshLambertMaterial({color: color6}), numIndividualAssets));
                     meshes[whichCoral].instanceMatrix.setUsage( THREE.DynamicDrawUsage);
-                    newcoral++;
+                    newcoral++; //count number of meshes loaded
                     scene.add( meshes[whichCoral] );
                     for (let g = 0; g < numIndividualAssets; g++) {
+                        //handle coral placement immediately after adding to scene.
                         handleCoral(whichCoral,g);
                     }
                 }
@@ -405,12 +372,12 @@ function loadCoral(whichCoral, assetLocation,scaler,typeAsset,colorType) {
         },
         // called while loading is progressing
         function ( xhr ) {
-           // console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+           console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
         },
         // called when loading has errors
         function ( error ) {
-           // console.log( 'An error happened ' + error );
+           console.log( 'An error happened ' + error );
         }
     );
 }
@@ -437,7 +404,7 @@ function handleArtefact() {
         }
     }
     if (currentArtefact > -50) {
-    //bobbing
+    //bobbing of the turtle trapped in plastic artefact and the wasted small group of fish.
         if (currentArtefact == 1 || currentArtefact == 2) {
             if (resetCounter == 0) {
                 bobMultiplier = bobMultiplier * -1;
@@ -445,29 +412,30 @@ function handleArtefact() {
             artefact[currentArtefact-1].position.y = artefact[currentArtefact-1].position.y + bobMultiplier/10;
         }
 
-
+        //control glowing of artefacts, loop from -15 to 15, by using magnitude of this value it rises and falls naturally.
         artefactGlow++;
         if (artefactGlow > 15) {
             artefactGlow=-15;
         }
         
         
-        //collision and placement
+        //collision and placement, if the artefact is the huge pile of ocean waste, then allow for a much wider collision detection so user doesnt clip through it.
         let multiplier = 1;
         if (currentArtefact == 4) {
             multiplier = 3;
         }
         if ( Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 70*multiplier ){
-            artefact[currentArtefact-1].position.y = -1000;
-            artefactFound[currentArtefact-1] = 1;
-            artefactNotification(currentArtefact);
+            artefact[currentArtefact-1].position.y = -1000; //hide artefact that was found
+            artefactFound[currentArtefact-1] = 1; //update array
+            artefactNotification(currentArtefact); //display notification animation
             currentArtefact = 0;
             music.pause;
 
-            //boost, remove at end?
+            //boosting mechanic that would allow for short bursts of speed when entering a current, removed during testing as not finalised
             //controls.autoForward = true;
             //controls.movementSpeed = respawnDistance*2;
         } else {
+            //if not colliding, update current artefact colour to glow using material emission value.
             artefact[currentArtefact-1].traverse((o) => {
                 if (o.isMesh) {
                     Math.abs(artefactGlow);
@@ -479,16 +447,17 @@ function handleArtefact() {
 }
 
 function artefactPlacer() {
-    while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 2000) {
-
-        artefactZ = Math.round((camera.position.z+(Math.random()-0.5)*2000*2)/spaceBetweenPoints)*spaceBetweenPoints;
-        artefactX = Math.round((camera.position.x+(Math.random()-0.5)*2000*2)/spaceBetweenPoints)*spaceBetweenPoints;
+    //while artefact is being placed, ensure the random x and y values are not too far away. (20*respawn distance ensures the distance they are placed away stays relative to the movement speed and render distance)
+    while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 20*respawnDistance) {
+        artefactZ = Math.round((camera.position.z+(Math.random()-0.5)*(20*respawnDistance)*2)/spaceBetweenPoints)*spaceBetweenPoints;
+        artefactX = Math.round((camera.position.x+(Math.random()-0.5)*(20*respawnDistance)*2)/spaceBetweenPoints)*spaceBetweenPoints;
     }
+    //update position when set, find y position by using heightmap against the values chosen to be x and y. halfOfDistance is used to accomodate the fact the position origin is in the middle, while the heightmap origin is in a corner.
     artefact[currentArtefact-1].position.x = artefactX;
     artefact[currentArtefact-1].position.z = artefactZ;
     artefact[currentArtefact-1].position.y = 20+(10*data[(artefactZ+halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+(artefactX+halfOfDistanceWidth)/(spaceBetweenPoints)]); //20 above floor
     if (currentArtefact == 1 || currentArtefact == 2) {
-        artefact[currentArtefact-1].position.y = artefact[currentArtefact-1].position.y+30;
+        artefact[currentArtefact-1].position.y = artefact[currentArtefact-1].position.y+30; //if artefact is one of the bobbing artefacts that float, place it higher above the terrain
     }
 }
 
@@ -497,20 +466,20 @@ function handleCoral(coralNum,i) {
     let coralPosX = camera.position.x;
     let coralPosZ = camera.position.z;
     let dummy = new THREE.Object3D();
+    //retrieve individual mesh from instanced mesh matrix, new matrix/objects made to apply temporary transformations to, to be copied to the mesh matrix when ready
     meshes[coralNum].getMatrixAt(i,matrix);
     let positionHolder = new THREE.Vector3();
     positionHolder.setFromMatrixPosition(matrix );
     matrix.setPosition(positionHolder);
-    
+    //if coral is in origin (often at start of experience), move to random new location
     if (positionHolder.x == 0 && positionHolder.z == 0) {
-        coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance; //random from -100 to 100
+        coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
         coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
-        
         coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy);
     } 
     else if (Math.hypot(positionHolder.x-camera.position.x,positionHolder.z-camera.position.z) > 9*respawnDistance){ //200 distance away from camera to despawn
         while (Math.hypot(coralPosX-camera.position.x,coralPosZ-camera.position.z) < 8*respawnDistance) { //80 distance away from camera to spawn
-            coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance; //random from -100 to 100
+            coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
             coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
         }
         coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy); 
@@ -518,15 +487,14 @@ function handleCoral(coralNum,i) {
 }
 
 function coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy) {
-    //convert to points on landscape by rounding
+    //convert to vertices on landscape by rounding
     coralPosX = Math.round((halfOfDistanceWidth+coralPosX)/spaceBetweenPoints)*spaceBetweenPoints;
     coralPosZ = Math.round((halfOfDistanceDepth+coralPosZ)/spaceBetweenPoints)*spaceBetweenPoints;
-    
     let coralPosY = 10*data[(coralPosZ)/(spaceBetweenPoints)*worldWidth+coralPosX/(spaceBetweenPoints)];
 
-    coralPosX += (Math.random()-Math.random())*spaceBetweenPoints/5; //small bit of randomisation to stop overlapping
+    coralPosX += (Math.random()-Math.random())*spaceBetweenPoints/5; //small bit of randomisation to stop overlapping when coral are both placed on identical vertices
     coralPosZ += (Math.random()-Math.random())*spaceBetweenPoints/5;
-
+    //set dummy transformations before applying to instanced mesh
     dummy.position.set(coralPosX-halfOfDistanceWidth,coralPosY,coralPosZ-halfOfDistanceDepth);
     let scaler = loadingArray[coralNum*4+1];
     dummy.scale.set(scaler+(Math.random()*4-2),scaler+(Math.random()*4-2),scaler+(Math.random()*4-2));
@@ -540,22 +508,23 @@ function handleFish(coralNum, i) {
     meshes[coralNum].getMatrixAt(i,matrix);
     matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
     let scaler = loadingArray[coralNum*4+1];
+    //for the percentage of time left, the same percentage of fish remain, they are removed by setting their scale to 0, otherwise update positions with same method as coral placement.
     if (timeLeft/100 > i/numIndividualAssets) {
         scaler = 0;
     } else{
         let fishPosX = Math.round((halfOfDistanceWidth+dummy.position.x)/spaceBetweenPoints)*spaceBetweenPoints;
         let fishPosZ = Math.round((halfOfDistanceDepth+dummy.position.z)/spaceBetweenPoints)*spaceBetweenPoints;
-        
         let fishPosY = 10*data[(fishPosZ)/(spaceBetweenPoints)*worldWidth+fishPosX/(spaceBetweenPoints)];
-        fishPosY = dummy.position.y-(fishPosY+70);
+        fishPosY = dummy.position.y-(fishPosY+70); //retrieve difference from terrain and fish, allowing for 70 between
         dummy.position.set(dummy.position.x,dummy.position.y,dummy.position.z);
-        if (fishPosY < 0) {
+        if (fishPosY < 0) { //if the fish is closer to terrain than 70 then raise up by a portion of that difference, so the further below, the faster it accelerates up
             dummy.position.y += - fishPosY*0.04;   
         } else {
-            dummy.position.y -= (Math.random()*0.4);
+            dummy.position.y -= (Math.random()*0.4); //if not just above terrain, then gradually drift downwards
         }
-        dummy.rotation.y += ((Math.random()*0.07)-(Math.random()*0.07));
+        dummy.rotation.y += ((Math.random()*0.07)-(Math.random()*0.07)); //apply small random rotation to simulate swimming
     }
+    //apply transformations
     dummy.scale.set(scaler,scaler,scaler);
     dummy.translateZ(2);
     dummy.updateMatrix();
@@ -563,6 +532,7 @@ function handleFish(coralNum, i) {
 }
 
 function floorCollision() {
+    //retrieve camera positions relative to terrain, then apply same technique used with fish-terrain collision
     let cameraX = Math.round((halfOfDistanceWidth+camera.position.x)/spaceBetweenPoints)*spaceBetweenPoints;
     let cameraZ = Math.round((halfOfDistanceDepth+camera.position.z)/spaceBetweenPoints)*spaceBetweenPoints;
     let floorY = 10*data[(cameraZ)/(spaceBetweenPoints)*worldWidth+cameraX/(spaceBetweenPoints)];
@@ -576,6 +546,7 @@ function floorCollision() {
 }
 
 function beginAV() {
+    //reset values and swap UI elements to ones used for experience
     timeLeft = 0;
     music.loop = true;
     music.play();
@@ -594,6 +565,7 @@ function beginAV() {
 }
 
 function startAnim() {
+    //short CSS animation fade in to transition between loading screen and starting menu
     if (gameState == -2 && (artefact.length+meshes.length)*4 == loadingArray.length){
         gameState = -1;
         document.getElementById("enterButton").classList.remove("introd");
@@ -602,30 +574,23 @@ function startAnim() {
         document.getElementById("container").classList.remove("introd");
         void document.getElementById("container").offsetWidth; 
         document.getElementById("container").classList.add("introd");
-        
-    }
-    if (gameState == -1 && timeLeft < 10) {
-        //timeLeft += 0.01;
-        //document.getElementById("enterButton").style = "opacity: "+timeLeft;
-        //document.getElementById("container").style = "opacity: "+timeLeft;
-        //document.getElementById("enterButton").style = "top: "+((timeLeft*80)-40)+"%";
-        
     }
 }
 
 function compassPointer() {
+    //trigonometry functions to find angle between camera position and artefact position, then add on rotation of the camera to make it responsive to look direction
     let vector = camera.getWorldDirection(new THREE.Vector3());
     let theta = THREE.Math.radToDeg(Math.atan2(vector.x,vector.z));
     let theta2 = THREE.Math.radToDeg(Math.atan2(camera.position.x-artefactX,camera.position.z-artefactZ));
-    //document.getElementById('compass').style = "transform: rotateX("+(45+THREE.Math.radToDeg(vector.y))+"deg);";
     document.getElementById('pointer').style = "transform: rotate("+(-theta2+theta)+"deg)";
 }
 
 function ending() {
+    //lock timeline and controls
     gameState = 2;
     controls.movementSpeed = 0;
     controls.lookSpeed = 0;
-    //get total
+    //get total by adding up artefacts found
     let total = 0;
     for (let i = 0; i < artefactFound.length; i++) {
         if (artefactFound[i] == 1) {
@@ -640,6 +605,7 @@ function ending() {
 }
 
 function artefactNotification(source) {
+    //update with relevant artefact icons and play CSS animation
     document.getElementById("colImg").src = "assets/artefacts/a"+source+".png";
     document.getElementById("collection").classList.remove("notif");
     void document.getElementById("collection").offsetWidth; 
@@ -647,6 +613,7 @@ function artefactNotification(source) {
 }
 
 function bleaching(coralN) {
+    //update coral colour as timeline progresses, using saturation for HSL colours to ensure colour change is gradual while retaining hue.
     meshes[coralN].traverse((o) => {
         if (o.isMesh) {
             let col = Math.round(timeLeft/2);
@@ -658,6 +625,7 @@ function bleaching(coralN) {
 function endingScreen() {
     gameState = 3;
     document.getElementById("info").style = "display: block;";
+    //if there was time left display victory message, otherwise communicate that the reef has fully died.
     if (timeLeft < 100) {
         document.getElementById("info").innerHTML = "Well done! You managed to collect all the artefacts before the ocean degraded!";
         document.getElementById("menuOpener").innerHTML = "RETURN";
@@ -671,17 +639,16 @@ function endingScreen() {
 }
 
 function openMenu() {
+    //toggleable menu that is reused with different actions dependending on the stage of the experience.
     if (shown < 0) {
         document.getElementById("menu").style = "display: block;";
         shown = shown*-1;
-        updatePage(1);
-        
+        updatePage(1); //update artefact UI
     }
     else if (shown >= 0) {
         document.getElementById("menu").style = "display: none;";
         shown = shown*-1;
     }
-
     if (gameState == 3) {
         location.reload();
     }
@@ -694,7 +661,7 @@ function openMenu() {
 }
 
 function updatePage(pageIncrement) {
-    
+    //change pictures to found or not found by going through each value in array. if not found apply a sepia filter.
     for (let i = 1; i <= artefactFound.length; i++) {
         document.getElementById("art"+i).style.width = "";
         document.getElementById("art"+i).style.height = "";
@@ -704,10 +671,9 @@ function updatePage(pageIncrement) {
             document.getElementById("art"+i).style.filter = "sepia(0%)";
         }
     }
-
     document.getElementById("art"+pageIncrement).style.width = "16vw";
     document.getElementById("art"+pageIncrement).style.height = "16vw";
-    if (artefactFound[pageIncrement-1] == 0) {
+    if (artefactFound[pageIncrement-1] == 0) {//update lifestyle tips for artefacts as they are collected
         document.getElementById("title").innerHTML = titles[0];
         document.getElementById("description").innerHTML = descriptions[0];
     } else {
