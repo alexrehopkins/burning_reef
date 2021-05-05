@@ -106,7 +106,7 @@ function init() {
     hlight = new THREE.AmbientLight (0xf5f5f5,0.6);
     scene.add(hlight);
     directionalLight = new THREE.DirectionalLight(0x61d3ff,0.7);
-    directionalLight1 = new THREE.DirectionalLight(0x61d3ff,0.4); //this directional light provides small amount of light below assets and lights up top of the skydome material
+    directionalLight1 = new THREE.DirectionalLight(0xffffff,0.2); //this directional light provides small amount of light below assets and lights up top of the skydome material
     directionalLight.position.set(0,1000,0);
     directionalLight1.position.set(0,-1000,0);
     scene.add(directionalLight);
@@ -289,7 +289,7 @@ function render() {
     //timeline hint prompts
     if (timeLeft > 1 && timeLeft < 1.2) {
         document.getElementById("info").style = "display: block";
-        document.getElementById("info").innerHTML = "Look around using the mouse, if you click you can move forward in the direction you are looking!"
+        document.getElementById("info").innerHTML = "Look around using the mouse, if you click and hold down the mouse button you can move forward in the direction you are looking!"
     }
     if (timeLeft > 4 && timeLeft < 4.2) {
         document.getElementById("info").style = "display: none";
@@ -311,6 +311,15 @@ function render() {
     if (timeLeft > 50 && timeLeft < 50.2) {
         document.getElementById("info").style = "display: none";
     }
+    if (timeLeft > 80 && timeLeft < 80.2) {
+        document.getElementById("info").style = "display: block";
+        document.getElementById("myBar").style.backgroundColor = "rgba(255, 5, 5)"
+        document.getElementById("info").innerHTML = "The ocean is nearly degraded! Quick hurry and collect all the artefacts before it's too late!"
+    }
+    if (timeLeft > 85 && timeLeft < 85.2) {
+        document.getElementById("info").style = "display: none";
+    }
+
     if (timeLeft < 100 && gameState == 0 && shown < 0) {
         compassPointer(); //update compass during experience
         for (let i = 0; i < artefactFound.length; i++) {
@@ -601,6 +610,7 @@ function artefactNotification(source) {
     document.getElementById("collection").classList.remove("notif");
     void document.getElementById("collection").offsetWidth; 
     document.getElementById("collection").classList.add("notif");
+    openMenu();
 }
 
 function bleaching(coralN) {
