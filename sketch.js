@@ -1,10 +1,10 @@
-import * as THREE from './three.module.js';//'./node_modules/three/build/three.module.js';
-import { FirstPersonControls } from './FirstPersonControls.js';//'./node_modules/three/examples/jsm/controls/FirstPersonControls.js';
-import { ImprovedNoise } from './ImprovedNoise.js';//'./node_modules/three/examples/jsm/math/ImprovedNoise.js';
-import { GLTFLoader } from './GLTFLoader.js';//'./node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from './three.module.js';//ThreeJS included in npm install from MrDoob
+import { FirstPersonControls } from './FirstPersonControls.js';//ThreeJS module included in npm install
+import { ImprovedNoise } from './ImprovedNoise.js';//ThreeJS module included in npm install
+import { GLTFLoader } from './GLTFLoader.js';//ThreeJS module included in npm install
 
 let container;
-let camera, controls, scene, renderer, hlight, directionalLight;
+let camera, controls, scene, renderer, hlight, directionalLight, directionalLight1;
 let landmesh, texture;
 let timeLeft = 0; //percentage, 0 just started, 100 is entirely degraded and ending
 let artefactX = 0;
@@ -23,7 +23,7 @@ let meshes = [];
 let matrix = new THREE.Matrix4();
 let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 ending screen opening, 2 congratulations, 3 opened, 4 return to main menu
 let music = new Audio('assets/underwatermusic.mp3');
-let tune = new Audio('assets/artefact.mp3'); //sound effect for artefact
+//let tune = new Audio('assets/artefact.mp3'); //unimplemented sound effect for artefact
 let artefactGlow = 0;
 let bobMultiplier = 1; // artefact bobbing tracker 1 means bobbing up, -1 bobbing down
 
@@ -53,11 +53,6 @@ let descriptions = [
 
 let imgurls = ["assets/iconNotFound.jpg","assets/artefacts/a1.png","assets/artefacts/a2.png","assets/artefacts/a3.png","assets/artefacts/a4.png","assets/artefacts/a5.png","assets/artefacts/a6.png","assets/artefacts/a7.png"];
 
-
-
-
-
-
 //object array for loading coral, artefacts loaded as gltf, must go at end with artefact label //assetlocation,size,type,color (or color means which artefact)
 let loadingArray = [
     'assets/coral1.gltf',18,"scene",10,
@@ -85,16 +80,16 @@ function init() {
 
     container = document.getElementById( 'container' );
 
-    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 8*respawnDistance ); //last value is render distance
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 9*respawnDistance ); //last value is render distance
 
     halfOfDistanceWidth = worldDirectWidth/2;
     halfOfDistanceDepth = worldDirectDepth/2;
     spaceBetweenPoints = (worldDirectWidth/worldWidth+worldDirectDepth/worldDepth)/2;
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x0099ff );
-    scene.fog = new THREE.FogExp2( 0x26a9ff, 0.001 ); //0.001 for fog density
+    scene.fog = new THREE.FogExp2( 0x26a9ff, 0.0012 ); //0.001 for fog density
 
-    data = generateHeight( worldWidth, worldDepth ); //function for generating height data.
+    data = generateHeight( worldWidth, worldDepth ); //function for generating height data, the code involved with generating and rendering terrain was pulled from the threeJS fog example found here https://threejs.org/examples/?q=terra#webgl_geometry_terrain 
 
     camera.position.set( 0, 710, 0 ); //initial camera position
     camera.lookAt( 0, 300, 150 );
@@ -108,36 +103,27 @@ function init() {
 
     }
     //lighting
-    hlight = new THREE.AmbientLight (0x404040,2);
+    hlight = new THREE.AmbientLight (0xffffff,0.6);
     scene.add(hlight);
-    directionalLight = new THREE.DirectionalLight(0x61d3ff,0.5);
-    directionalLight.castShadow = true;
+    directionalLight = new THREE.DirectionalLight(0x61d3ff,0.7);
+    directionalLight1 = new THREE.DirectionalLight(0x61d3ff,0.7);
     directionalLight.position.set(0,1000,0);
+    directionalLight1.position.set(0,-1000,0);
     scene.add(directionalLight);
-
-
-    
+    scene.add(directionalLight1);
 
     //skybox
-    const vertexShader = document.getElementById( 'vertexShader' ).textContent;
-	const fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
-	const uniforms = {
-		topColor: { value: new THREE.Color( 0xB0EEFF ) },
-        bottomColor: { value: new THREE.Color( 0x0099ff ) },
-        offset: { value: 100 },
-		exponent: { value: 0.9 }
-	};
 	const skyGeo = new THREE.SphereGeometry( 7*respawnDistance, 32, 15 );
-	const skyMat = new THREE.ShaderMaterial( {
-		uniforms: uniforms,
-		vertexShader: vertexShader,
-		fragmentShader: fragmentShader,
+	const skyMat = new THREE.MeshPhongMaterial( {
+        color: 0x26a9ff,
+        emissive: 0x1f5387,
+        specular: 0xffffff, 
 		side: THREE.BackSide,
+        fog: false
     });
     sky = new THREE.Mesh( skyGeo, skyMat );
     
 	scene.add( sky );
-
 
     //end of skybox
 
@@ -146,10 +132,12 @@ function init() {
     texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
     landmesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { map: texture } ) );
+    landmesh.receiveShadow = true;
     scene.add( landmesh );
 
     //renderer
     renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.shadowMap.enabled = true;
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
@@ -261,6 +249,7 @@ function animate() {
                     handleFish(f, g);
                 }
             }
+            meshes[f].instanceMatrix.needsUpdate = true;
         }   
     }
     //counter that updates coral assets, cycles through an asset in the array every frame to avoid updating all at once
@@ -269,7 +258,6 @@ function animate() {
         resetCounter = 0;    
     }   
     sky.position.set(camera.position.x,camera.position.y+100,camera.position.z); //reset skybox to camera to ensure user doesnt go out of skybox bounds
-    directionalLight.position.set(camera.position.x,camera.position.y+1000,camera.position.z); //reset lighting to camera
     floorCollision();
     render();
 }
@@ -291,12 +279,7 @@ function render() {
         controls.movementSpeed = respawnDistance/2;
         controls.lookSpeed = 0.07;
     }
-    //if mesh is loaded update matrix
-    for (let i = 0; i<newcoral;i++){
-        if (meshes[i]) {
-            meshes[i].instanceMatrix.needsUpdate = true;
-        }
-    }
+    
     controls.update( clock.getDelta() );
     music.playbackRate = 1+(0.4-(timeLeft/100));
     renderer.render( scene, camera );
@@ -356,9 +339,10 @@ function loadCoral(whichCoral, assetLocation,scaler,typeAsset,colorType) {
                 if (child.isMesh) {
                     //apply the colour specified in the load, with maximum saturation so the gradual change to a bleached state is more clear.
                     let color6 = new THREE.Color("hsl("+colorType+", 100%, 50%)");
-                    
+                    child.castShadow = true;
+                    child.recieveShadow = true;
                     //create the instanced mesh
-                    meshes[whichCoral] = (new THREE.InstancedMesh( child.geometry, new THREE.MeshLambertMaterial({color: color6}), numIndividualAssets));
+                    meshes[whichCoral] = (new THREE.InstancedMesh( child.geometry, new THREE.MeshPhongMaterial({color: color6}), numIndividualAssets));
                     meshes[whichCoral].instanceMatrix.setUsage( THREE.DynamicDrawUsage);
                     newcoral++; //count number of meshes loaded
                     scene.add( meshes[whichCoral] );
