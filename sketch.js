@@ -15,8 +15,10 @@ let artefactFound = [0,0,0,0,0,0,0]//[0,0,0,0,0,0,0];
 let newcoral = 0;
 let data;
 let sky;
+let total;
 let halfOfDistanceWidth;
 let halfOfDistanceDepth;
+let particleinstance;
 let resetCounter = 0;
 let spaceBetweenPoints;
 let meshes = [];
@@ -157,6 +159,20 @@ function init() {
     for (let i = 0; i < loadingArray.length; i+=4) {
         loadCoral(i/4,loadingArray[i],loadingArray[i+1],loadingArray[i+2],loadingArray[i+3]);
     }
+
+
+    const geometry1 = new THREE.BufferGeometry();
+    const vertices1 = [];
+    const sprite = new THREE.TextureLoader().load( 'assets/backscatter.png' );
+    for ( let i = 0; i < 3000; i ++ ) {
+        vertices1.push( respawnDistance*(10*Math.random()-5), respawnDistance*(10*Math.random()-5), respawnDistance*(10*Math.random()-5) );
+    }
+    geometry1.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices1, 3 ) );
+    let material1 = new THREE.PointsMaterial( { size: 5, sizeAttenuation: true, map: sprite, transparent: true} );
+    particleinstance = new THREE.Points( geometry1, material1 );
+    scene.add( particleinstance );
+
+
 }
 
 function onWindowResize() {
@@ -447,10 +463,11 @@ function handleArtefact() {
 
 function artefactPlacer() {
     //while artefact is being placed, ensure the random x and y values are not too far away. (20*respawn distance ensures the distance they are placed away stays relative to the movement speed and render distance)
-    while (Math.hypot(artefactX-camera.position.x,artefactZ-camera.position.z) < 20*respawnDistance) {
-        artefactZ = Math.round((camera.position.z+(Math.random()-0.5)*(20*respawnDistance)*2)/spaceBetweenPoints)*spaceBetweenPoints;
-        artefactX = Math.round((camera.position.x+(Math.random()-0.5)*(20*respawnDistance)*2)/spaceBetweenPoints)*spaceBetweenPoints;
-    }
+    //generate along circumference of a circle centered on camera with radius of respawn distance*20
+    var angle = Math.random()*Math.PI*2;
+    artefactX = Math.round((camera.position.x+(Math.cos(angle)*20*respawnDistance))/spaceBetweenPoints)*spaceBetweenPoints;
+    artefactZ = Math.round((camera.position.z+(Math.sin(angle)*20*respawnDistance))/spaceBetweenPoints)*spaceBetweenPoints;
+
     //update position when set, find y position by using heightmap against the values chosen to be x and y. halfOfDistance is used to accomodate the fact the position origin is in the middle, while the heightmap origin is in a corner.
     artefact[currentArtefact-1].position.x = artefactX;
     artefact[currentArtefact-1].position.z = artefactZ;
@@ -476,11 +493,11 @@ function handleCoral(coralNum,i) {
         coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
         coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy);
     } 
-    else if (Math.hypot(positionHolder.x-camera.position.x,positionHolder.z-camera.position.z) > 9*respawnDistance){ //200 distance away from camera to despawn
-        while (Math.hypot(coralPosX-camera.position.x,coralPosZ-camera.position.z) < 8*respawnDistance) { //80 distance away from camera to spawn
-            coralPosX = camera.position.x+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
-            coralPosZ = camera.position.z+Math.floor(Math.random() * 20*respawnDistance)-10*respawnDistance;
-        }
+    else if (Math.hypot(positionHolder.x-camera.position.x,positionHolder.z-camera.position.z) > 9*respawnDistance){ //distance away from camera to despawn
+        //generate along circumference of a circle centered on camera with radius of respawn distance*8
+        var angle = Math.random()*Math.PI*2;
+        coralPosX = camera.position.x+(Math.cos(angle)*8*respawnDistance);
+        coralPosZ = camera.position.z+(Math.sin(angle)*8*respawnDistance);
         coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy); 
     }
 }
@@ -500,6 +517,13 @@ function coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy) {
     dummy.rotation.y = Math.random()*7;
     dummy.updateMatrix();
     meshes[coralNum].setMatrixAt( i, dummy.matrix );
+}
+
+function handleParticle(i) {
+    let dummy = new THREE.Object3D();
+    particleinstance.getMatrixAt(i,matrix);
+    matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
+    dummy.position += 0.1;
 }
 
 function handleFish(coralNum, i) {
@@ -590,7 +614,7 @@ function ending() {
     controls.movementSpeed = 0;
     controls.lookSpeed = 0;
     //get total by adding up artefacts found
-    let total = 0;
+    total = 0;
     for (let i = 0; i < artefactFound.length; i++) {
         if (artefactFound[i] == 1) {
             total++
@@ -605,12 +629,11 @@ function ending() {
 
 function artefactNotification(source) {
     //update with relevant artefact icons and play CSS animation
-    updatePage(source);
     document.getElementById("colImg").src = "assets/artefacts/a"+source+".png";
     document.getElementById("collection").classList.remove("notif");
     void document.getElementById("collection").offsetWidth; 
     document.getElementById("collection").classList.add("notif");
-    openMenu();
+    openMenu(source);
 }
 
 function bleaching(coralN) {
@@ -639,12 +662,12 @@ function endingScreen() {
     shown = 1;
 }
 
-function openMenu() {
+function openMenu(value) {
     //toggleable menu that is reused with different actions dependending on the stage of the experience.
     if (shown < 0) {
         document.getElementById("menu").style = "display: block;";
         shown = shown*-1;
-        updatePage(1); //update artefact UI
+        updatePage(value); //update artefact UI
     }
     else if (shown >= 0) {
         document.getElementById("menu").style = "display: none;";
@@ -663,6 +686,7 @@ function openMenu() {
 
 function updatePage(pageIncrement) {
     //change pictures to found or not found by going through each value in array. if not found apply a sepia filter.
+    console.log(pageIncrement);
     for (let i = 1; i <= artefactFound.length; i++) {
         document.getElementById("art"+i).style.width = "";
         document.getElementById("art"+i).style.height = "";
@@ -683,7 +707,7 @@ function updatePage(pageIncrement) {
     }
 }
 
-document.getElementById('menuOpener').addEventListener("click", function() {openMenu()}, false);
+document.getElementById('menuOpener').addEventListener("click", function() {openMenu(1)}, false);
 document.getElementById('art1').addEventListener("click", function() {updatePage(1)}, false);
 document.getElementById('art2').addEventListener("click", function() {updatePage(2)}, false);
 document.getElementById('art3').addEventListener("click", function() {updatePage(3)}, false);
