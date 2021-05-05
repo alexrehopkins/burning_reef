@@ -26,7 +26,7 @@ let meshes = [];
 let matrix = new THREE.Matrix4();
 let gameState = -2; //-2, loading assets, -1 title screen, 0 playing, 1 ending screen opening, 2 congratulations, 3 opened, 4 return to main menu
 let music = new Audio('assets/underwatermusic.mp3');
-//let tune = new Audio('assets/artefact.mp3'); //unimplemented sound effect for artefact
+let tune = new Audio('assets/artefact.mp3'); //unimplemented sound effect for artefact
 let artefactGlow = 0;
 let bobMultiplier = 1; // artefact bobbing tracker 1 means bobbing up, -1 bobbing down
 
@@ -299,7 +299,6 @@ function render() {
     }
     handleParticle();
     controls.update( clock.getDelta() );
-    music.playbackRate = 1+(0.4-(timeLeft/100));
     renderer.render( scene, camera );
     
     if (currentArtefact == -99 && gameState < 2) {
@@ -308,23 +307,25 @@ function render() {
     //timeline hint prompts
     if (timeLeft > 1 && timeLeft < 1.2) {
         document.getElementById("info").style = "display: block";
-        document.getElementById("info").innerHTML = "Look around using the mouse, if you click and hold down the mouse button you can move forward in the direction you are looking!"
+        document.getElementById("info").innerHTML = "Look around using the mouse, if you click and hold down the mouse button you can move forward in the direction you are looking!";
     }
     if (timeLeft > 4 && timeLeft < 4.2) {
         document.getElementById("info").style = "display: none";
     }
     if (timeLeft > 5 && timeLeft < 5.2) {
         document.getElementById("info").style = "display: block";
-        document.getElementById("info").innerHTML = "Use the compass in the bottom left to hunt down the nearest artefact! <br> They might be far away but you should be able to see the artefact gently flashing!"
+        document.getElementById("info").innerHTML = "Use the compass in the bottom left to hunt down the nearest artefact! <br> They might be far away but you should be able to see the artefact gently flashing!";
     }
 
     if (timeLeft > 9 && timeLeft < 9.2) {
         document.getElementById("info").style = "display: none";
+        music.playbackRate = 1.1;
     }
 
     if (timeLeft > 46 && timeLeft < 46.2) {
         document.getElementById("info").style = "display: block";
-        document.getElementById("info").innerHTML = "Look at the timeline at the bottom! <br> The ocean is already half degraded!"
+        document.getElementById("info").innerHTML = "Look at the timeline at the bottom! <br> The ocean is already half degraded!";
+        music.playbackRate = 0.9;
     }
 
     if (timeLeft > 50 && timeLeft < 50.2) {
@@ -332,21 +333,23 @@ function render() {
     }
     if (timeLeft > 80 && timeLeft < 80.2) {
         document.getElementById("info").style = "display: block";
-        document.getElementById("myBar").style.backgroundColor = "rgba(255, 5, 5)"
-        document.getElementById("info").innerHTML = "The ocean is nearly degraded! Quick hurry and collect all the artefacts before it's too late!"
+        document.getElementById("myBar").style.backgroundColor = "rgba(255, 5, 5)";
+        document.getElementById("info").innerHTML = "The ocean is nearly degraded! Quick hurry and collect all the artefacts before it's too late!";
+        music.playbackRate = 0.6;
     }
     if (timeLeft > 85 && timeLeft < 85.2) {
         document.getElementById("info").style = "display: none";
+        music.playbackRate = 0.4;
     }
 
     if (timeLeft < 100 && gameState == 0 && shown < 0) {
         compassPointer(); //update compass during experience
         for (let i = 0; i < artefactFound.length; i++) {
             if (artefactFound[i] == 1) {
-                timeLeft = timeLeft + 0.0015; //every frame degrades, degrades more for each artefact found.
+                timeLeft = timeLeft + 0.001; //every frame degrades, degrades more for each artefact found.
             }
         }
-        timeLeft = timeLeft + 0.001; //every frame degrades
+        timeLeft = timeLeft + 0.0005; //every frame degrades
         var elem = document.getElementById("myBar");
         handleArtefact(); //artefact position handler
         elem.style.width = (timeLeft) + "%";
@@ -437,8 +440,9 @@ function handleArtefact() {
             artefact[currentArtefact-1].position.y = -1000; //hide artefact that was found
             artefactFound[currentArtefact-1] = 1; //update array
             artefactNotification(currentArtefact); //display notification animation
+            music.pause();
+            tune.play();
             currentArtefact = 0;
-            music.pause;
 
             //boosting mechanic that would allow for short bursts of speed when entering a current, removed during testing as not finalised
             //controls.autoForward = true;
@@ -578,6 +582,7 @@ function beginAV() {
     timeLeft = 0;
     music.loop = true;
     music.play();
+    music.playbackRate = 1.3;
     camera.position.x = 0;
     camera.position.z = 0;
     camera.position.y = 10+10*data[(halfOfDistanceDepth)/(spaceBetweenPoints)*worldWidth+halfOfDistanceDepth/(spaceBetweenPoints)];;
@@ -629,7 +634,7 @@ function ending() {
     document.getElementById("compass").style = "display: none;";
     document.getElementById("menuOpener").style.bottom = "50%";
     document.getElementById("menuOpener").style.right = "45%";
-    document.getElementById("menuOpener").innerHTML = "THE END? CLICK TO REVIEW YOUR ARTEFACTS";
+    document.getElementById("menuOpener").innerHTML = "THE <br> END?";
 }
 
 function artefactNotification(source) {
@@ -673,10 +678,13 @@ function openMenu(value) {
         document.getElementById("menu").style = "display: block;";
         shown = shown*-1;
         updatePage(value); //update artefact UI
+        music.pause();
     }
     else if (shown >= 0) {
         document.getElementById("menu").style = "display: none;";
         shown = shown*-1;
+        tune.pause();
+        music.play();
     }
     if (gameState == 3) {
         location.reload();
