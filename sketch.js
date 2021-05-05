@@ -4,7 +4,7 @@ import { ImprovedNoise } from './ImprovedNoise.js';//ThreeJS module included in 
 import { GLTFLoader } from './GLTFLoader.js';//ThreeJS module included in npm install
 
 let container;
-let camera, controls, scene, renderer, hlight, directionalLight, directionalLight1;
+let camera, controls, scene, renderer, ambientLight, directionalLight, skyLight;
 let landmesh, texture;
 let timeLeft = 0; //percentage, 0 just started, 100 is entirely degraded and ending
 let artefactX = 0;
@@ -18,7 +18,8 @@ let sky;
 let total;
 let halfOfDistanceWidth;
 let halfOfDistanceDepth;
-let particleinstance;
+let particleInstance;
+let particleCount = 3000;
 let resetCounter = 0;
 let spaceBetweenPoints;
 let meshes = [];
@@ -105,14 +106,14 @@ function init() {
 
     }
     //lighting
-    hlight = new THREE.AmbientLight (0xf5f5f5,0.6);
-    scene.add(hlight);
+    ambientLight = new THREE.AmbientLight (0xf5f5f5,0.6);
+    scene.add(ambientLight);
     directionalLight = new THREE.DirectionalLight(0x61d3ff,0.7);
-    directionalLight1 = new THREE.DirectionalLight(0xffffff,0.2); //this directional light provides small amount of light below assets and lights up top of the skydome material
+    skyLight = new THREE.DirectionalLight(0xffffff,0.2); //this directional light provides small amount of light below assets and lights up top of the skydome material
     directionalLight.position.set(0,1000,0);
-    directionalLight1.position.set(0,-1000,0);
+    skyLight.position.set(0,-1000,0);
     scene.add(directionalLight);
-    scene.add(directionalLight1);
+    scene.add(skyLight);
 
     //skybox
 	const skyGeo = new THREE.SphereGeometry( 7*respawnDistance, 32, 15 ); //skydome is created using phong material that is highly specular to create a gradient
@@ -160,17 +161,19 @@ function init() {
         loadCoral(i/4,loadingArray[i],loadingArray[i+1],loadingArray[i+2],loadingArray[i+3]);
     }
 
-
+    //particle system
     const geometry1 = new THREE.BufferGeometry();
     const vertices1 = [];
     const sprite = new THREE.TextureLoader().load( 'assets/backscatter.png' );
-    for ( let i = 0; i < 3000; i ++ ) {
-        vertices1.push( respawnDistance*(10*Math.random()-5), respawnDistance*(10*Math.random()-5), respawnDistance*(10*Math.random()-5) );
+    for ( let i = 0; i < particleCount; i ++ ) {
+        //insert position attribute, and scatter randomly within render distance
+        vertices1.push( (Math.random()-0.5)*16*respawnDistance,(Math.random()-0.5)*500,(Math.random()-0.5)*16*respawnDistance );
     }
     geometry1.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices1, 3 ) );
     let material1 = new THREE.PointsMaterial( { size: 5, sizeAttenuation: true, map: sprite, transparent: true} );
-    particleinstance = new THREE.Points( geometry1, material1 );
-    scene.add( particleinstance );
+    particleInstance = new THREE.Points( geometry1, material1 );
+    particleInstance.frustumCulled = false;
+    scene.add( particleInstance );
 
 
 }
@@ -294,7 +297,7 @@ function render() {
         controls.movementSpeed = respawnDistance/2;
         controls.lookSpeed = 0.07;
     }
-    
+    handleParticle();
     controls.update( clock.getDelta() );
     music.playbackRate = 1+(0.4-(timeLeft/100));
     renderer.render( scene, camera );
@@ -382,15 +385,6 @@ function loadCoral(whichCoral, assetLocation,scaler,typeAsset,colorType) {
                 }
             });
         }    
-        },
-        // called while loading is progressing
-        function ( xhr ) {
-           console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-    
-        },
-        // called when loading has errors
-        function ( error ) {
-           console.log( 'An error happened ' + error );
         }
     );
 }
@@ -519,11 +513,22 @@ function coralPlacer(coralNum,i,coralPosX,coralPosZ,dummy) {
     meshes[coralNum].setMatrixAt( i, dummy.matrix );
 }
 
-function handleParticle(i) {
-    let dummy = new THREE.Object3D();
-    particleinstance.getMatrixAt(i,matrix);
-    matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
-    dummy.position += 0.1;
+function handleParticle() {
+    for ( let i = 0; i < particleInstance.geometry.attributes.position.array.length; i += 3 ) {
+        particleInstance.geometry.attributes.position.array[ i+1 ] += 0.2;
+        if (particleInstance.geometry.attributes.position.array[ i+1 ]-camera.position.y > 300) {
+            particleInstance.geometry.attributes.position.array[ i+1 ] = camera.position.y - 200;
+            particleInstance.geometry.attributes.position.array[ i ] =  camera.position.x + (Math.random()-0.5)*respawnDistance*16;
+            particleInstance.geometry.attributes.position.array[ i+2 ] = camera.position.z + (Math.random()-0.5)*respawnDistance*16;
+        }
+        if ( Math.hypot(particleInstance.geometry.attributes.position.array[ i ]-camera.position.x,particleInstance.geometry.attributes.position.array[ i+2 ]-camera.position.z) > respawnDistance*9 ) {
+            particleInstance.geometry.attributes.position.array[ i+1 ] = camera.position.y + (Math.random()-0.5)*500;
+            var angle = Math.random()*Math.PI*2;
+            particleInstance.geometry.attributes.position.array[ i ] =  camera.position.x + (Math.cos(angle)*8*respawnDistance);
+            particleInstance.geometry.attributes.position.array[ i+2 ] = camera.position.z + (Math.sin(angle)*8*respawnDistance);
+        }
+    }
+    particleInstance.geometry.attributes.position.needsUpdate = true;
 }
 
 function handleFish(coralNum, i) {
@@ -686,7 +691,6 @@ function openMenu(value) {
 
 function updatePage(pageIncrement) {
     //change pictures to found or not found by going through each value in array. if not found apply a sepia filter.
-    console.log(pageIncrement);
     for (let i = 1; i <= artefactFound.length; i++) {
         document.getElementById("art"+i).style.width = "";
         document.getElementById("art"+i).style.height = "";
