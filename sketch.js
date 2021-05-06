@@ -282,7 +282,7 @@ function animate() {
 
 function render() {
     //freeze camera if menu is open, otherwise continue
-    if (shown > 0){
+    if (shown > 0 || gameState != 0){
         controls.movementSpeed = 0;
         controls.lookSpeed = 0;
     }
@@ -324,6 +324,7 @@ function render() {
 
     if (timeLeft > 46 && timeLeft < 46.2) {
         document.getElementById("info").style = "display: block";
+        document.getElementById("myBar").style.backgroundColor = "rgba(255, 5, 255)";
         document.getElementById("info").innerHTML = "Look at the timeline at the bottom! <br> The ocean is already half degraded!";
         music.playbackRate = 0.9;
     }
@@ -684,6 +685,7 @@ function openMenu(value) {
         document.getElementById("menu").style = "display: none;";
         shown = shown*-1;
         tune.pause();
+        tune.currentTime = 0;
         music.play();
     }
     if (gameState == 3) {
